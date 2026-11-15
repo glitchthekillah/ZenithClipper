@@ -1,0 +1,3 @@
+testStop=requested-inside-completion-gate
+testStop=source-copy-completed-before-frame-return-and-stop
+waitMode=fence-event calls=1 queryPolls=0 eventWaits=1 eventFailures=0 waitSeconds=0.009004600

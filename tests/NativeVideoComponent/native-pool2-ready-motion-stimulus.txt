@@ -1,0 +1,1 @@
+frames=1254 seconds=8.000813 fps=156.734 maxGapMs=403.317 status=0x00000000

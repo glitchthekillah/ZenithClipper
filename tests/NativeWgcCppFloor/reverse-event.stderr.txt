@@ -1,0 +1,1 @@
+waitMode=fence-event calls=227 queryPolls=0 eventWaits=227 eventFailures=0 waitSeconds=0.135009400

@@ -1,0 +1,7 @@
+# Competitive baseline
+
+App-audio selection is useful but is not unique. OBS documents both [application audio capture](https://obsproject.com/kb/application-audio-capture-guide) and its [replay buffer](https://obsproject.com/kb/OBS-Studio-Overview). Medal documents [all-PC versus specific-app audio](https://support.medal.tv/support/solutions/articles/48000922091) and [recording, audio, quality and hotkey settings](https://support.medal.tv/support/solutions/articles/48000959661-getting-started-with-medal-on-windows). NVIDIA's [app](https://www.nvidia.com/en-us/software/nvidia-app/) includes DVR-style Instant Replay.
+
+ZenithClipper's proposed differentiation is a small, local background recorder; controls/editor that terminate when closed; straightforward pre-capture audio rules; and cross-vendor/Windows/Linux intent. No feed, account, upload or always-open editor is required. Only the tested AMD Windows path and headless Linux core have evidence so far. Do not claim faster/lighter than competing products without same-machine measurements.
+
+For a real comparison, hold resolution, FPS, scene, codec, visual quality, audio sources and buffer duration constant. Compare combined CPU/private memory/working set, GPU encode/3D utilization, VRAM, disk writes, game frame-time percentiles, lost frames, A/V sync, clip-save latency and failures. Test closing all client windows and restarting excluded apps. Include OBS replay buffer, Medal, NVIDIA Instant Replay where supported, and the user's Xbox Game Bar reference workflow.

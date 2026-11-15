@@ -1,0 +1,96 @@
+using ZenithClipper;
+using System.Diagnostics;
+
+namespace ZenithClipper.Windows;
+
+public sealed class PanelForm : Form
+{
+    readonly Label status = new() { AutoSize = true, MaximumSize = new Size(620, 0), Text = "Connecting…" };
+    readonly Label result = new() { AutoSize = true, MaximumSize = new Size(620, 0) };
+    readonly NumericUpDown duration = Number(1, 86400, 30);
+    readonly NumericUpDown retention = Number(1, 86400, 120);
+    readonly NumericUpDown disk = Number(32, 1048576, 2048);
+    readonly NumericUpDown fps = Number(0, 1000, 0);
+    readonly NumericUpDown width = Number(0, 16384, 0, 2);
+    readonly NumericUpDown quality = Number(0, 51, 20);
+    readonly NumericUpDown monitor = Number(0, 32, 0);
+    readonly ComboBox encoder = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
+    readonly ComboBox backend = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
+    readonly CheckBox audio = new() { Text = "Capture app audio", AutoSize = true, Checked = true };
+    readonly TextBox excluded = new() { Width = 360 };
+    readonly TextBox directory = new() { Width = 360 };
+    readonly TextBox clipKey = new() { Width = 180 };
+    readonly TextBox panelKey = new() { Width = 180 };
+    readonly System.Windows.Forms.Timer timer = new() { Interval = 1500 };
+    Settings settings = new();
+    bool updating;
+    bool busy;
+    public PanelForm()
+    {
+        Text = "ZenithClipper — controls"; ClientSize = new(700, 760); MinimumSize = new(580, 500); StartPosition = FormStartPosition.CenterScreen;
+        var layout = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Padding = new Padding(18) };
+        Controls.Add(layout); layout.Controls.Add(status);
+        var actions = new FlowLayoutPanel { AutoSize = true, WrapContents = true, MaximumSize = new Size(640, 0) };
+        AddButton(actions, "Save clip", async () => { var response = await EngineClient.SendAsync(new("save", (int)duration.Value)); result.Text = "Saved: " + response.Path; });
+        AddButton(actions, "Pause", async () => { await EngineClient.SendAsync(new("pause")); await RefreshStatus(); });
+        AddButton(actions, "Resume", async () => { await EngineClient.SendAsync(new("resume")); await RefreshStatus(); });
+        AddButton(actions, "Open editor", () => { EngineClient.Editor(); return Task.CompletedTask; });
+        AddButton(actions, "Open clips", () => { Directory.CreateDirectory(settings.ClipDirectory); Process.Start(new ProcessStartInfo(settings.ClipDirectory) { UseShellExecute = true }); return Task.CompletedTask; });
+        layout.Controls.Add(actions); layout.Controls.Add(result);
+        AddRow(layout, "Clip length (seconds; 3600 = one hour)", duration);
+        AddRow(layout, "Buffer duration (seconds)", retention);
+        AddRow(layout, "Disk buffer limit (MiB)", disk);
+        AddRow(layout, "FPS (0 = monitor refresh)", fps);
+        AddRow(layout, "Output width (0 = native)", width);
+        AddRow(layout, "Quality (lower = higher quality/larger files)", quality);
+        AddRow(layout, "Monitor index (0 = first GPU output)", monitor);
+        encoder.Items.AddRange(["auto", "nvenc", "qsv", "amf", "software"]); encoder.SelectedIndex = 0;
+        AddRow(layout, "Encoder (software uses more CPU)", encoder);
+        backend.Items.AddRange(["auto","desktop-duplication"]);backend.SelectedIndex=0;AddRow(layout,"Capture backend (compatibility override)",backend);
+        layout.Controls.Add(audio); AddRow(layout, "Exclude app audio (comma-separated process names)", excluded);
+        AddRow(layout, "Clip folder", directory); AddRow(layout, "Save hotkey", clipKey); AddRow(layout, "Panel hotkey", panelKey);
+        var bottom = new FlowLayoutPanel { AutoSize = true };
+        AddButton(bottom, "Apply settings", Apply);
+        AddButton(bottom, "Quit engine", async () => { await EngineClient.SendAsync(new("shutdown")); Close(); });
+        AddButton(bottom, "Close panel", () => { Close(); return Task.CompletedTask; });
+        layout.Controls.Add(bottom);
+        layout.Controls.Add(new Label { AutoSize = true, MaximumSize = new Size(620, 0), Text = "Closing this panel leaves capture running. Fast clips start on keyframes and include a snapshot of the newest segment. Audio exclusion leaves playback unchanged. A smaller disk cap can shorten the available history." });
+        Shown += async (_, _) => await Guard(async () => { await EngineClient.EnsureAsync(); var response = await EngineClient.SendAsync(new("settings")); settings = response.Settings!; LoadSettings(); await RefreshStatus(); timer.Start(); });
+        timer.Tick += async (_, _) => { if (!updating && !busy) { updating = true; try { await RefreshStatus(); } catch (Exception ex) { status.Text = "Engine unavailable: " + ex.Message; } finally { updating = false; } } };
+        FormClosed += (_, _) => timer.Dispose();
+    }
+    void LoadSettings()
+    {
+        duration.Value = settings.ClipSeconds; retention.Value = settings.BufferSeconds; disk.Value = settings.MaxBufferMiB;
+        fps.Value = settings.Fps; width.Value = settings.OutputWidth; quality.Value = settings.Quality; monitor.Value = settings.Monitor;
+        encoder.SelectedItem = settings.Encoder; audio.Checked = settings.CaptureAudio; excluded.Text = string.Join(", ", settings.ExcludedApps);
+        backend.SelectedItem=settings.WindowsCaptureBackend;
+        directory.Text = settings.ClipDirectory; clipKey.Text = settings.ClipHotkey; panelKey.Text = settings.PanelHotkey;
+    }
+    async Task Apply()
+    {
+        var value = settings with { ClipSeconds = (int)duration.Value, BufferSeconds = (int)retention.Value, MaxBufferMiB = (long)disk.Value, Fps = (int)fps.Value, OutputWidth = (int)width.Value, Quality = (int)quality.Value, Monitor = (int)monitor.Value, Encoder = encoder.SelectedItem?.ToString() ?? "auto", CaptureAudio = audio.Checked, ExcludedApps = excluded.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries), ClipDirectory = directory.Text, ClipHotkey = clipKey.Text, PanelHotkey = panelKey.Text };
+        value=value with{WindowsCaptureBackend=backend.SelectedItem?.ToString()??"auto"};value.Validate(); await EngineClient.SendAsync(new("configure", Settings: value)); settings = value; result.Text = "Settings applied. Changing capture settings starts a fresh buffer."; await RefreshStatus();
+    }
+    async Task RefreshStatus()
+    {
+        var response = await EngineClient.SendAsync(new("status")); var s = response.Status!;
+        status.Text = $"{s.State} • {s.Encoder ?? "not selected"} • {s.BufferedSeconds:F1}s buffered • {s.BufferBytes / 1048576.0:F1} MiB" + (string.IsNullOrEmpty(s.Error) ? "" : "\n" + s.Error)+(string.IsNullOrEmpty(s.Notice)?"":"\n"+s.Notice);
+    }
+    async Task Guard(Func<Task> action)
+    {
+        if (busy) return; busy = true;
+        try { await action(); } catch (Exception ex) { result.Text = ex.Message; MessageBox.Show(this, ex.Message, "ZenithClipper", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+        finally { busy = false; }
+    }
+    void AddButton(System.Windows.Forms.Control parent, string text, Func<Task> action)
+    {
+        var button = new Button { Text = text, AutoSize = true }; button.Click += async (_, _) => await Guard(action); parent.Controls.Add(button);
+    }
+    internal static NumericUpDown Number(decimal min, decimal max, decimal value, decimal increment = 1) => new() { Minimum = min, Maximum = max, Value = value, Increment = increment, Width = 180 };
+    internal static void AddRow(System.Windows.Forms.Control parent, string label, System.Windows.Forms.Control field)
+    {
+        var row = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Margin = new Padding(0, 4, 0, 4) };
+        row.Controls.Add(new Label { Text = label, AutoSize = true }); row.Controls.Add(field); parent.Controls.Add(row);
+    }
+}

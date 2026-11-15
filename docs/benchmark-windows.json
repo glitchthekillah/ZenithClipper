@@ -1,0 +1,40 @@
+{
+  "MeasuredAt": "2026-11-03T15:55:51.8382550-05:00",
+  "Test": "Desktop only; not a gaming benchmark",
+  "Fps": 0,
+  "CaptureBackend": "desktop-duplication",
+  "Seconds": 5,
+  "Encoder": "nvenc",
+  "ExcludedApps": [
+    "Spotify"
+  ],
+  "LogicalProcessors": 16,
+  "Processes": [
+    {
+      "Name": "zenithclipper",
+      "Pid": 32248,
+      "WorkingSetMiB": 46.84,
+      "PrivateMiB": 14.6,
+      "CpuPercentOfOneLogicalCore": 5.62
+    },
+    {
+      "Name": "ffmpeg",
+      "Pid": 32028,
+      "WorkingSetMiB": 436.75,
+      "PrivateMiB": 653.28,
+      "CpuPercentOfOneLogicalCore": 42.17
+    }
+  ],
+  "Status": {
+    "Capturing": true,
+    "State": "Capturing",
+    "Error": null,
+    "Encoder": "nvenc",
+    "BufferedSeconds": 4.021333,
+    "BufferBytes": 1962112,
+    "LastClip": null,
+    "ProcessId": 32248,
+    "Notice": "NVIDIA hardware encoding is active; frames are transferred from the display GPU."
+  },
+  "Notes": "Working sets include shared pages; GPU utilization and in-game frame-time impact were not measured."
+}

@@ -1,0 +1,15 @@
+mainPhase=before-format cycle=0 original=00000116E6E81AD8
+mainPhase=before-run cycle=0
+waitMode=query-poll calls=40 queryPolls=7034 eventWaits=0 eventFailures=0 waitSeconds=0.021488200
+mainPhase=before-format cycle=1 original=00000116E6E81AD8
+mainPhase=before-run cycle=1
+waitMode=query-poll calls=40 queryPolls=6969 eventWaits=0 eventFailures=0 waitSeconds=0.024372300
+mainPhase=before-format cycle=2 original=00000116E6E81AD8
+mainPhase=before-run cycle=2
+waitMode=query-poll calls=30 queryPolls=5143 eventWaits=0 eventFailures=0 waitSeconds=0.017987900
+mainPhase=before-format cycle=3 original=00000116E6E81AD8
+mainPhase=before-run cycle=3
+waitMode=query-poll calls=41 queryPolls=8220 eventWaits=0 eventFailures=0 waitSeconds=0.024275700
+mainPhase=before-format cycle=4 original=00000116E6E81AD8
+mainPhase=before-run cycle=4
+waitMode=query-poll calls=34 queryPolls=5209 eventWaits=0 eventFailures=0 waitSeconds=0.025757100

@@ -1,0 +1,91 @@
+using ZenithClipper;
+using System.Diagnostics;
+using System.Text.Json;
+
+namespace ZenithClipper.Windows;
+
+public sealed class EditorForm : Form
+{
+    readonly ListBox clips = new() { Dock = DockStyle.Fill, HorizontalScrollbar = true };
+    readonly Label info = new() { Text = "Select a clip", AutoSize = true, MaximumSize = new Size(450, 0) };
+    readonly NumericUpDown start = PanelForm.Number(0, 86400, 0);
+    readonly NumericUpDown length = PanelForm.Number(0, 86400, 0);
+    readonly NumericUpDown volume = PanelForm.Number(0, 400, 100);
+    readonly NumericUpDown speed = PanelForm.Number(50, 200, 100);
+    readonly NumericUpDown width = PanelForm.Number(0, 16384, 0, 2);
+    readonly NumericUpDown cropW = PanelForm.Number(0, 16384, 0, 2);
+    readonly NumericUpDown cropH = PanelForm.Number(0, 16384, 0, 2);
+    readonly NumericUpDown cropX = PanelForm.Number(0, 16384, 0);
+    readonly NumericUpDown cropY = PanelForm.Number(0, 16384, 0);
+    readonly CheckBox fast = new() { Text = "Fast keyframe trim (no video re-encode)", AutoSize = true, Checked = true };
+    readonly CheckBox mute = new() { Text = "Mute audio", AutoSize = true };
+    readonly Label progress = new() { AutoSize = true, MaximumSize = new Size(450, 0) };
+    readonly Button export = new() { Text = "Export MP4…", AutoSize = true };
+    readonly Button cancel = new() { Text = "Cancel export", AutoSize = true, Enabled = false };
+    CancellationTokenSource? operation;
+    Settings settings = new();
+    readonly string? initial;
+    string? selected;
+    bool exporting;
+    public EditorForm(string? path)
+    {
+        initial = path; Text = "ZenithClipper — editor"; ClientSize = new(1000, 760); MinimumSize = new(850, 550); StartPosition = FormStartPosition.CenterScreen;
+        var split = new SplitContainer { Dock = DockStyle.Fill, SplitterDistance = 340 }; Controls.Add(split);
+        var left = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2 }; left.RowStyles.Add(new(SizeType.AutoSize)); left.RowStyles.Add(new(SizeType.Percent, 100));
+        var tools = new FlowLayoutPanel { AutoSize = true };
+        Button open = new() { Text = "Open file…", AutoSize = true }; Button refresh = new() { Text = "Refresh clips", AutoSize = true };
+        tools.Controls.Add(open); tools.Controls.Add(refresh); left.Controls.Add(tools); left.Controls.Add(clips); split.Panel1.Controls.Add(left);
+        var right = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(16) }; split.Panel2.Controls.Add(right);
+        right.Controls.Add(info);
+        var preview = new Button { Text = "Preview in video player", AutoSize = true }; right.Controls.Add(preview);
+        PanelForm.AddRow(right, "Start (seconds)", start); PanelForm.AddRow(right, "Duration (0 = to end)", length);
+        start.DecimalPlaces = 3; length.DecimalPlaces = 3;
+        right.Controls.Add(fast); right.Controls.Add(mute);
+        PanelForm.AddRow(right, "Audio volume (%)", volume); PanelForm.AddRow(right, "Playback speed (%)", speed);
+        PanelForm.AddRow(right, "Output width (0 = unchanged)", width);
+        var crop = new FlowLayoutPanel { AutoSize = true, MaximumSize = new Size(500, 0) };
+        foreach (var (label, field) in new[] { ("Crop width", cropW), ("Crop height", cropH), ("Crop X", cropX), ("Crop Y", cropY) }) { field.Width = 90; PanelForm.AddRow(crop, label, field); }
+        right.Controls.Add(crop);
+        var actions = new FlowLayoutPanel { AutoSize = true }; actions.Controls.Add(export); actions.Controls.Add(cancel); right.Controls.Add(actions); right.Controls.Add(progress);
+        right.Controls.Add(new Label { AutoSize = true, MaximumSize = new Size(450, 0), Text = "Original clips are preserved. Precise trimming, cropping, scaling, speed and volume changes re-encode using the configured encoder. Fast trims snap to keyframes. To split a clip, export each selected range." });
+        open.Click += async (_, _) => { using var dialog = new OpenFileDialog { Filter = "Video|*.mp4;*.mkv;*.ts;*.mov|All files|*.*" }; if (dialog.ShowDialog(this) == DialogResult.OK) await SelectAsync(dialog.FileName); };
+        refresh.Click += (_, _) => LoadClips();
+        preview.Click += (_, _) => { if (selected != null) Process.Start(new ProcessStartInfo(selected) { UseShellExecute = true }); };
+        clips.SelectedIndexChanged += async (_, _) => { if (clips.SelectedItem is ClipItem item) await SelectAsync(item.Path); };
+        export.Click += async (_, _) => await Export(); cancel.Click += (_, _) => operation?.Cancel();
+        Shown += async (_, _) => { try { settings = AppPaths.Load(); LoadClips(); if (initial != null) await SelectAsync(initial); } catch (Exception ex) { progress.Text = ex.Message; } };
+        FormClosing += (_, e) => { if (exporting) { e.Cancel = true; operation?.Cancel(); progress.Text = "Cancelling export; close after it stops."; } };
+    }
+    void LoadClips()
+    {
+        clips.Items.Clear(); if (!Directory.Exists(settings.ClipDirectory)) return;
+        foreach (string path in Directory.EnumerateFiles(settings.ClipDirectory, "*.mp4").Where(x => !Path.GetFileName(x).StartsWith('.')).OrderByDescending(File.GetLastWriteTimeUtc)) clips.Items.Add(new ClipItem(path));
+    }
+    async Task SelectAsync(string path)
+    {
+        if (exporting) return; selected = path; info.Text = Path.GetFileName(path); start.Value = 0; length.Value = 0;
+        try
+        {
+            string json = await MediaTools.ProbeAsync(MediaTools.FindFfmpeg(settings), path); using var doc = JsonDocument.Parse(json);
+            var video = doc.RootElement.GetProperty("streams").EnumerateArray().First(x => x.GetProperty("codec_type").GetString() == "video");
+            info.Text = $"{Path.GetFileName(path)}\n{video.GetProperty("width")} × {video.GetProperty("height")} • {video.GetProperty("r_frame_rate")} fps\n{doc.RootElement.GetProperty("format").GetProperty("duration")} seconds";
+        }
+        catch (Exception ex) { progress.Text = ex.Message; }
+    }
+    async Task Export()
+    {
+        if (selected == null || exporting) return;
+        using var dialog = new SaveFileDialog { Filter = "MP4 video|*.mp4", DefaultExt = "mp4", FileName = Path.GetFileNameWithoutExtension(selected) + "-edited.mp4", InitialDirectory = Path.GetDirectoryName(selected), OverwritePrompt = false };
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+        exporting = true; export.Enabled = false; cancel.Enabled = true; operation = new(); progress.Text = "Exporting…";
+        try
+        {
+            var request = new EditRequest(selected, dialog.FileName) { StartSeconds = (double)start.Value, DurationSeconds = length.Value == 0 ? null : (double)length.Value, FastTrim = fast.Checked, Mute = mute.Checked, Volume = (double)volume.Value / 100, Speed = (double)speed.Value / 100, OutputWidth = (int)width.Value, CropWidth = (int)cropW.Value, CropHeight = (int)cropH.Value, CropX = (int)cropX.Value, CropY = (int)cropY.Value, Encoder = settings.Encoder, Quality = settings.Quality };
+            await Editor.ExportAsync(settings, request, operation.Token); progress.Text = "Saved: " + dialog.FileName; LoadClips();
+        }
+        catch (OperationCanceledException) { progress.Text = "Export cancelled; original preserved."; }
+        catch (Exception ex) { progress.Text = ex.Message; }
+        finally { operation.Dispose(); operation = null; exporting = false; export.Enabled = true; cancel.Enabled = false; }
+    }
+    sealed record ClipItem(string Path) { public override string ToString() => System.IO.Path.GetFileName(Path); }
+}

@@ -1,0 +1,9 @@
+mainPhase=before-format cycle=0 original=0000028595FEB04A
+mainPhase=before-run cycle=0
+waitMode=fence-event calls=37 queryPolls=0 eventWaits=37 eventFailures=0 waitSeconds=0.034733000
+mainPhase=before-format cycle=1 original=0000028595FEB04A
+mainPhase=before-run cycle=1
+waitMode=fence-event calls=39 queryPolls=0 eventWaits=39 eventFailures=0 waitSeconds=0.032741500
+mainPhase=before-format cycle=2 original=0000028595FEB04A
+mainPhase=before-run cycle=2
+waitMode=fence-event calls=38 queryPolls=0 eventWaits=38 eventFailures=0 waitSeconds=0.032465700

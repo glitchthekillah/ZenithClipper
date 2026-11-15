@@ -1,0 +1,19 @@
+{"phase":"before-device","frames":0,"workingSetBytes":34459648,"privateBytes":9003008,"gpuLocalBytes":0,"gpuNonLocalBytes":0,"managedBytes":77752}
+{"phase":"encode-before-prepare","frames":0,"workingSetBytes":89137152,"privateBytes":66232320,"gpuLocalBytes":6946816,"gpuNonLocalBytes":757760,"managedBytes":372712}
+{"phase":"encode-before-prepare-adapter0","frames":0,"workingSetBytes":89964544,"privateBytes":67043328,"gpuLocalBytes":0,"gpuNonLocalBytes":0,"managedBytes":372712}
+{"mode":"mf-encode","CanTranscode":true,"failure":"None","output":"C:\\Users\\szajf\\My Projects\\ZenithClipper\\tests\\NativeCapturePrototype\\bin\\Release\\net10.0-windows10.0.26100.0\\wgc-mf-probe.mp4","width":2560,"height":1600,"requestedFrameRate":60,"bitrate":40000000,"constantQpValidated":false,"buffers":2}
+{"phase":"encode-1s","frames":2,"workingSetBytes":144044032,"privateBytes":128106496,"gpuLocalBytes":58077184,"gpuNonLocalBytes":905216,"managedBytes":651256}
+{"phase":"encode-1s-adapter0","frames":2,"workingSetBytes":144044032,"privateBytes":128106496,"gpuLocalBytes":9924608,"gpuNonLocalBytes":0,"managedBytes":668584}
+{"samples":2,"retainedFrames":2}
+{"phase":"encode-2s","frames":2,"workingSetBytes":144535552,"privateBytes":128225280,"gpuLocalBytes":58077184,"gpuNonLocalBytes":905216,"managedBytes":708336}
+{"phase":"encode-2s-adapter0","frames":2,"workingSetBytes":144535552,"privateBytes":128225280,"gpuLocalBytes":9924608,"gpuNonLocalBytes":0,"managedBytes":716560}
+{"samples":2,"retainedFrames":2}
+{"phase":"encode-3s","frames":2,"workingSetBytes":144568320,"privateBytes":127176704,"gpuLocalBytes":58077184,"gpuNonLocalBytes":905216,"managedBytes":724784}
+{"phase":"encode-3s-adapter0","frames":2,"workingSetBytes":144625664,"privateBytes":127180800,"gpuLocalBytes":9924608,"gpuNonLocalBytes":0,"managedBytes":733008}
+{"samples":2,"retainedFrames":2}
+{"phase":"encode-4s","frames":2,"workingSetBytes":144646144,"privateBytes":127180800,"gpuLocalBytes":58077184,"gpuNonLocalBytes":905216,"managedBytes":740976}
+{"phase":"encode-4s-adapter0","frames":2,"workingSetBytes":144650240,"privateBytes":127180800,"gpuLocalBytes":9924608,"gpuNonLocalBytes":0,"managedBytes":749200}
+{"samples":2,"retainedFrames":2}
+{"phase":"encode-5s","frames":2,"workingSetBytes":144711680,"privateBytes":127275008,"gpuLocalBytes":58077184,"gpuNonLocalBytes":905216,"managedBytes":757424}
+{"phase":"encode-5s-adapter0","frames":2,"workingSetBytes":144732160,"privateBytes":127275008,"gpuLocalBytes":9924608,"gpuNonLocalBytes":0,"managedBytes":765648}
+{"samples":2,"retainedFrames":2}

@@ -1,0 +1,88 @@
+using System.Diagnostics;
+using System.Text.Json;
+
+namespace ZenithClipper;
+
+/// <summary>Dedicated recording sink; excluded streams remain on their original playback sink.</summary>
+public sealed class LinuxAudio : IAsyncDisposable
+{
+    readonly Settings settings;
+    readonly Dictionary<uint, string> moved = [];
+    readonly List<string> modules = [];
+    readonly SemaphoreSlim gate = new(1);
+    readonly string sink = "zenithclipper_" + Environment.ProcessId;
+    string playback = "";
+    uint captureSink;
+    public string Source => sink + ".monitor";
+    public LinuxAudio(Settings settings) => this.settings = settings;
+    static async Task<string> Pactl(CancellationToken ct, params string[] args)
+    {
+        using var timeout=CancellationTokenSource.CreateLinkedTokenSource(ct);timeout.CancelAfter(TimeSpan.FromSeconds(3));
+        try{return await MediaTools.RunAsync("pactl",args,timeout.Token);}
+        catch(OperationCanceledException ex) when(!ct.IsCancellationRequested){throw new IOException("PulseAudio command timed out.",ex);}
+    }
+    public async Task StartAsync(CancellationToken ct=default)
+    {
+        playback = (await Pactl(ct,"get-default-sink")).Trim();
+        modules.Add((await Pactl(ct,"load-module", "module-null-sink", $"sink_name={sink}", "sink_properties=device.description=ZenithClipperCapture")).Trim());
+        try
+        {
+            modules.Add((await Pactl(ct,"load-module", "module-loopback", $"source={Source}", $"sink={playback}", "latency_msec=20", "source_dont_move=true", "sink_dont_move=true")).Trim());
+            using var sinks = JsonDocument.Parse(await Pactl(ct,"-f", "json", "list", "sinks"));
+            captureSink = sinks.RootElement.EnumerateArray().Single(x => x.GetProperty("name").GetString() == sink).GetProperty("index").GetUInt32();
+            await RefreshAsync(ct);
+        }
+        catch { await DisposeAsync(); throw; }
+    }
+    public async Task RefreshAsync(CancellationToken ct=default)
+    {
+        await gate.WaitAsync(ct);
+        try
+        {
+            using var doc = JsonDocument.Parse(await Pactl(ct,"-f", "json", "list", "sink-inputs"));
+            foreach (var item in doc.RootElement.EnumerateArray())
+            {
+                uint id = item.GetProperty("index").GetUInt32(); uint current = item.GetProperty("sink").GetUInt32();
+                if(item.TryGetProperty("owner_module",out var owner) && modules.Contains(owner.ToString())) continue;
+                if(item.TryGetProperty("driver",out var driver) && driver.GetString()?.Contains("loopback",StringComparison.OrdinalIgnoreCase)==true) continue;
+                var props = item.GetProperty("properties");
+                string Property(string key) => props.TryGetProperty(key, out var value) ? value.GetString() ?? "" : "";
+                // Never route our monitor-to-speaker loopback back into itself.
+                if (Property("media.name").Contains(Source, StringComparison.Ordinal) || Property("application.id") == "org.PulseAudio.Loopback" || Property("media.role") == "filter") continue;
+                bool excluded = AudioPolicy.Excluded(Property("application.process.binary"), settings.ExcludedApps) || AudioPolicy.Excluded(Property("application.name"), settings.ExcludedApps);
+                if (excluded)
+                {
+                    if (current == captureSink && moved.Remove(id, out string? original)) await Pactl(ct,"move-sink-input", $"{id}", original);
+                }
+                else if (current != captureSink)
+                {
+                    moved[id] = $"{current}";
+                    try { await Pactl(ct,"move-sink-input", $"{id}", sink); } catch (IOException) { moved.Remove(id); }
+                }
+            }
+        }
+        finally { gate.Release(); }
+    }
+    public async ValueTask DisposeAsync()
+    {
+        using var cleanup=new CancellationTokenSource(TimeSpan.FromSeconds(8));var ct=cleanup.Token;
+        try{await gate.WaitAsync(ct);}catch(OperationCanceledException){return;}
+        try
+        {
+            foreach(var (id,original) in moved)
+            {
+                if(ct.IsCancellationRequested)break;
+                try{await Pactl(ct,"move-sink-input",$"{id}",original);}
+                catch(Exception ex) when(ex is IOException or OperationCanceledException)
+                {try{await Pactl(ct,"move-sink-input",$"{id}",playback);}catch(Exception retry) when(retry is IOException or OperationCanceledException){}}
+            }
+            foreach(var id in modules.AsEnumerable().Reverse())
+            {
+                using var unload=new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                try{await Pactl(unload.Token,"unload-module",id);}catch(Exception ex) when(ex is IOException or OperationCanceledException){}
+            }
+            moved.Clear();modules.Clear();
+        }
+        finally{gate.Release();}
+    }
+}

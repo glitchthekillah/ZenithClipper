@@ -1,0 +1,25 @@
+mainPhase=before-format cycle=0 original=0000022D3CB6A75A
+mainPhase=before-run cycle=0
+testStop=requested-inside-completion-gate
+testStop=source-copy-completed-before-frame-return-and-stop
+waitMode=fence-event calls=1 queryPolls=0 eventWaits=1 eventFailures=0 waitSeconds=0.005107000
+mainPhase=before-format cycle=1 original=0000022D3CB6A75A
+mainPhase=before-run cycle=1
+testStop=requested-inside-completion-gate
+testStop=source-copy-completed-before-frame-return-and-stop
+waitMode=fence-event calls=1 queryPolls=0 eventWaits=1 eventFailures=0 waitSeconds=0.007230300
+mainPhase=before-format cycle=2 original=0000022D3CB6A75A
+mainPhase=before-run cycle=2
+testStop=requested-inside-completion-gate
+testStop=source-copy-completed-before-frame-return-and-stop
+waitMode=fence-event calls=1 queryPolls=0 eventWaits=1 eventFailures=0 waitSeconds=0.006212600
+mainPhase=before-format cycle=3 original=0000022D3CB6A75A
+mainPhase=before-run cycle=3
+testStop=requested-inside-completion-gate
+testStop=source-copy-completed-before-frame-return-and-stop
+waitMode=fence-event calls=1 queryPolls=0 eventWaits=1 eventFailures=0 waitSeconds=0.009986600
+mainPhase=before-format cycle=4 original=0000022D3CB6A75A
+mainPhase=before-run cycle=4
+testStop=requested-inside-completion-gate
+testStop=source-copy-completed-before-frame-return-and-stop
+waitMode=fence-event calls=1 queryPolls=0 eventWaits=1 eventFailures=0 waitSeconds=0.004504200

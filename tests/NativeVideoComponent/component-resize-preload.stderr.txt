@@ -1,0 +1,1699 @@
+Preload native DLL begin
+Preload native DLL done
+2026-11-04T14:10:25.5861144Z COM init
+2026-11-04T14:10:25.9104055Z D3D device ready
+2026-11-04T14:10:26.0542422Z NVENC create
+native GetImmediateContext
+native LoadLibraryEx nvEncodeAPI64
+native LoadLibraryEx done
+native create(&e->api)
+native done
+native e->api.nvEncOpenEncodeSessionEx(&open, &e->session)
+native done
+native e->api.nvEncGetEncodePresetConfigEx(e->session, NV_ENC_CODEC_H264_GUID, NV_ENC_PRESET_P1_GUID, NV_ENC_TUNING_INFO_ULTRA_LOW_LATENCY, &preset)
+native done
+native e->api.nvEncInitializeEncoder(e->session, &init)
+native done
+native e->api.nvEncRegisterResource(e->session, &resource)
+native done
+native e->api.nvEncCreateBitstreamBuffer(e->session, &bs)
+native done
+2026-11-04T14:10:26.1130725Z NVENC ready / resize configure
+2026-11-04T14:10:26.1144618Z Resize configured
+2026-11-04T14:10:26.1262828Z WGC start
+2026-11-04T14:10:26.6123006Z First frame copy
+2026-11-04T14:10:26.6178029Z Copy complete
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncMapInputResource(e->session, &map)
+native done
+native e->api.nvEncEncodePicture(e->session, &pic)
+native done

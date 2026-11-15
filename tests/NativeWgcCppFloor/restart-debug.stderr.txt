@@ -1,0 +1,18 @@
+mainPhase=before-format cycle=0 original=000001ECA359E3BA
+mainPhase=before-run cycle=0
+waitMode=fence-event calls=56 queryPolls=0 eventWaits=56 eventFailures=0 waitSeconds=0.040681500
+mainPhase=before-format cycle=1 original=000001ECA359E3BA
+mainPhase=before-run cycle=1
+ownCrash code=c0000005 address=00007FF6D5982BAE
+stack C:\Users\szajf\My Projects\ZenithClipper\tests\NativeWgcCppFloor\probe.exe+2701
+stack C:\Windows\System32\KERNELBASE.dll+10f4e3
+stack C:\Windows\SYSTEM32\ntdll.dll+16a030
+stack C:\Windows\SYSTEM32\ntdll.dll+124b93
+stack C:\Windows\SYSTEM32\ntdll.dll+1664af
+stack C:\Windows\SYSTEM32\ntdll.dll+c4065
+stack C:\Windows\SYSTEM32\ntdll.dll+165dee
+stack C:\Users\szajf\My Projects\ZenithClipper\tests\NativeWgcCppFloor\probe.exe+2bae
+stack C:\Users\szajf\My Projects\ZenithClipper\tests\NativeWgcCppFloor\probe.exe+6156
+stack C:\Users\szajf\My Projects\ZenithClipper\tests\NativeWgcCppFloor\probe.exe+684c
+stack C:\Windows\System32\KERNEL32.DLL+2dda7
+stack C:\Windows\SYSTEM32\ntdll.dll+7ee4c

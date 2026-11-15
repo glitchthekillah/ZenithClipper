@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <NativeVideoBridgePath Condition="'$(NativeVideoBridgePath)' == ''">native/nvenc_shim.dll</NativeVideoBridgePath>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(NativeVideoBridgePath)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Link="nvenc_shim.dll" Condition="Exists('$(NativeVideoBridgePath)')" />
+  </ItemGroup>
+</Project>

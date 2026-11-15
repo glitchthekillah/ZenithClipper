@@ -1,0 +1,11 @@
+Pattern launch begin
+Pattern launch complete
+2026-11-04T14:31:27.2977568Z COM init
+2026-11-04T14:31:27.6144502Z D3D device ready
+2026-11-04T14:31:27.7791014Z NVENC create
+2026-11-04T14:31:27.8303598Z NVENC ready / resize configure
+2026-11-04T14:31:27.8310630Z Resize configured
+2026-11-04T14:31:27.8449598Z WGC default MinUpdateInterval ticks=160000
+2026-11-04T14:31:27.8457503Z WGC start / MinUpdateInterval zero
+2026-11-04T14:31:28.3511185Z First frame copy
+2026-11-04T14:31:28.3552671Z Copy complete

@@ -1,0 +1,2 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType></PropertyGroup><ItemGroup><ProjectReference Include="../../src/ZenithClipper.Media/ZenithClipper.Media.csproj" /><ProjectReference Include="../../src/ZenithClipper.Mlt/ZenithClipper.Mlt.csproj" /></ItemGroup></Project>
+

@@ -1,0 +1,698 @@
+[
+  {
+    "mode": "bgra",
+    "width": 2560,
+    "height": 1600,
+    "maximumError": 3,
+    "bars": [
+      {
+        "index": 0,
+        "reference": [
+          0,
+          0,
+          0
+        ],
+        "decoded": [
+          0,
+          0,
+          0
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 1,
+        "reference": [
+          255,
+          255,
+          255
+        ],
+        "decoded": [
+          255,
+          255,
+          255
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 2,
+        "reference": [
+          255,
+          0,
+          0
+        ],
+        "decoded": [
+          254,
+          0,
+          0
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 3,
+        "reference": [
+          0,
+          255,
+          0
+        ],
+        "decoded": [
+          0,
+          254,
+          0
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 4,
+        "reference": [
+          0,
+          0,
+          255
+        ],
+        "decoded": [
+          0,
+          0,
+          254
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 5,
+        "reference": [
+          0,
+          255,
+          255
+        ],
+        "decoded": [
+          0,
+          253,
+          254
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 6,
+        "reference": [
+          255,
+          0,
+          255
+        ],
+        "decoded": [
+          254,
+          0,
+          253
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 7,
+        "reference": [
+          255,
+          255,
+          0
+        ],
+        "decoded": [
+          253,
+          253,
+          0
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 8,
+        "reference": [
+          64,
+          64,
+          64
+        ],
+        "decoded": [
+          64,
+          64,
+          64
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 9,
+        "reference": [
+          128,
+          128,
+          128
+        ],
+        "decoded": [
+          128,
+          128,
+          128
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 10,
+        "reference": [
+          192,
+          192,
+          192
+        ],
+        "decoded": [
+          192,
+          192,
+          192
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 11,
+        "reference": [
+          64,
+          128,
+          192
+        ],
+        "decoded": [
+          62,
+          126,
+          191
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 12,
+        "reference": [
+          204,
+          76,
+          25
+        ],
+        "decoded": [
+          201,
+          74,
+          24
+        ],
+        "maximumError": 3
+      },
+      {
+        "index": 13,
+        "reference": [
+          25,
+          102,
+          204
+        ],
+        "decoded": [
+          24,
+          101,
+          204
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 14,
+        "reference": [
+          153,
+          204,
+          51
+        ],
+        "decoded": [
+          152,
+          202,
+          50
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 15,
+        "reference": [
+          230,
+          25,
+          128
+        ],
+        "decoded": [
+          229,
+          23,
+          127
+        ],
+        "maximumError": 2
+      }
+    ]
+  },
+  {
+    "mode": "nv12",
+    "width": 2560,
+    "height": 1600,
+    "maximumError": 3,
+    "bars": [
+      {
+        "index": 0,
+        "reference": [
+          0,
+          0,
+          0
+        ],
+        "decoded": [
+          0,
+          0,
+          0
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 1,
+        "reference": [
+          255,
+          255,
+          255
+        ],
+        "decoded": [
+          255,
+          255,
+          255
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 2,
+        "reference": [
+          255,
+          0,
+          0
+        ],
+        "decoded": [
+          254,
+          0,
+          0
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 3,
+        "reference": [
+          0,
+          255,
+          0
+        ],
+        "decoded": [
+          0,
+          254,
+          0
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 4,
+        "reference": [
+          0,
+          0,
+          255
+        ],
+        "decoded": [
+          0,
+          0,
+          254
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 5,
+        "reference": [
+          0,
+          255,
+          255
+        ],
+        "decoded": [
+          0,
+          253,
+          254
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 6,
+        "reference": [
+          255,
+          0,
+          255
+        ],
+        "decoded": [
+          255,
+          0,
+          254
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 7,
+        "reference": [
+          255,
+          255,
+          0
+        ],
+        "decoded": [
+          253,
+          253,
+          0
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 8,
+        "reference": [
+          64,
+          64,
+          64
+        ],
+        "decoded": [
+          64,
+          64,
+          64
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 9,
+        "reference": [
+          128,
+          128,
+          128
+        ],
+        "decoded": [
+          128,
+          128,
+          128
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 10,
+        "reference": [
+          192,
+          192,
+          192
+        ],
+        "decoded": [
+          192,
+          192,
+          192
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 11,
+        "reference": [
+          64,
+          128,
+          192
+        ],
+        "decoded": [
+          62,
+          126,
+          191
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 12,
+        "reference": [
+          204,
+          76,
+          25
+        ],
+        "decoded": [
+          203,
+          76,
+          26
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 13,
+        "reference": [
+          25,
+          102,
+          204
+        ],
+        "decoded": [
+          24,
+          101,
+          204
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 14,
+        "reference": [
+          153,
+          204,
+          51
+        ],
+        "decoded": [
+          152,
+          202,
+          50
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 15,
+        "reference": [
+          230,
+          25,
+          128
+        ],
+        "decoded": [
+          229,
+          23,
+          125
+        ],
+        "maximumError": 3
+      }
+    ]
+  },
+  {
+    "mode": "nv12",
+    "width": 1280,
+    "height": 800,
+    "maximumError": 3,
+    "bars": [
+      {
+        "index": 0,
+        "reference": [
+          0,
+          0,
+          0
+        ],
+        "decoded": [
+          0,
+          0,
+          0
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 1,
+        "reference": [
+          255,
+          255,
+          255
+        ],
+        "decoded": [
+          255,
+          255,
+          255
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 2,
+        "reference": [
+          255,
+          0,
+          0
+        ],
+        "decoded": [
+          254,
+          0,
+          0
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 3,
+        "reference": [
+          0,
+          255,
+          0
+        ],
+        "decoded": [
+          0,
+          254,
+          0
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 4,
+        "reference": [
+          0,
+          0,
+          255
+        ],
+        "decoded": [
+          0,
+          0,
+          254
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 5,
+        "reference": [
+          0,
+          255,
+          255
+        ],
+        "decoded": [
+          0,
+          253,
+          254
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 6,
+        "reference": [
+          255,
+          0,
+          255
+        ],
+        "decoded": [
+          255,
+          0,
+          254
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 7,
+        "reference": [
+          255,
+          255,
+          0
+        ],
+        "decoded": [
+          253,
+          253,
+          0
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 8,
+        "reference": [
+          64,
+          64,
+          64
+        ],
+        "decoded": [
+          64,
+          64,
+          64
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 9,
+        "reference": [
+          128,
+          128,
+          128
+        ],
+        "decoded": [
+          128,
+          128,
+          128
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 10,
+        "reference": [
+          192,
+          192,
+          192
+        ],
+        "decoded": [
+          192,
+          192,
+          192
+        ],
+        "maximumError": 0
+      },
+      {
+        "index": 11,
+        "reference": [
+          64,
+          128,
+          192
+        ],
+        "decoded": [
+          62,
+          126,
+          191
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 12,
+        "reference": [
+          204,
+          76,
+          25
+        ],
+        "decoded": [
+          203,
+          76,
+          26
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 13,
+        "reference": [
+          25,
+          102,
+          204
+        ],
+        "decoded": [
+          24,
+          101,
+          204
+        ],
+        "maximumError": 1
+      },
+      {
+        "index": 14,
+        "reference": [
+          153,
+          204,
+          51
+        ],
+        "decoded": [
+          152,
+          202,
+          50
+        ],
+        "maximumError": 2
+      },
+      {
+        "index": 15,
+        "reference": [
+          230,
+          25,
+          128
+        ],
+        "decoded": [
+          229,
+          23,
+          125
+        ],
+        "maximumError": 3
+      }
+    ]
+  }
+]

@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+<PropertyGroup><OutputType>Exe</OutputType><AssemblyName>ZenithClipper.Recorder</AssemblyName><TargetFramework>net10.0-windows10.0.26100.0</TargetFramework><EnableWindowsTargeting>true</EnableWindowsTargeting><PublishAot>true</PublishAot><IlcOptimizationPreference>Size</IlcOptimizationPreference><OptimizationPreference>Size</OptimizationPreference><StripSymbols>true</StripSymbols><InvariantGlobalization>true</InvariantGlobalization><RuntimeIdentifier>win-x64</RuntimeIdentifier></PropertyGroup>
+<ItemGroup><ProjectReference Include="../ZenithClipper.Core/ZenithClipper.Core.csproj" /><ProjectReference Include="../ZenithClipper.Native.Video/ZenithClipper.Native.Video.csproj" /><ProjectReference Include="../ZenithClipper.Native.Audio/Aac.csproj" /><ProjectReference Include="../ZenithClipper.Media/ZenithClipper.Media.csproj" /></ItemGroup>
+</Project>

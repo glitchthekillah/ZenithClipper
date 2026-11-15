@@ -1,0 +1,9 @@
+{"phase":"before-device","frames":0,"workingSetBytes":34476032,"privateBytes":9072640,"gpuLocalBytes":0,"gpuNonLocalBytes":0,"managedBytes":77752}
+{"phase":"before-pool","frames":0,"workingSetBytes":78540800,"privateBytes":58961920,"gpuLocalBytes":6946816,"gpuNonLocalBytes":757760,"managedBytes":262976}
+{"mode":"capture-only","adapterIndex":1,"buffers":1,"width":2560,"height":1600,"seconds":5}
+{"phase":"capture-1s","frames":24,"workingSetBytes":84697088,"privateBytes":60542976,"gpuLocalBytes":6959104,"gpuNonLocalBytes":905216,"managedBytes":364536}
+{"phase":"capture-2s","frames":61,"workingSetBytes":84926464,"privateBytes":61353984,"gpuLocalBytes":6959104,"gpuNonLocalBytes":905216,"managedBytes":389160}
+{"phase":"capture-3s","frames":97,"workingSetBytes":86654976,"privateBytes":62377984,"gpuLocalBytes":6959104,"gpuNonLocalBytes":905216,"managedBytes":413528}
+{"phase":"capture-4s","frames":130,"workingSetBytes":86720512,"privateBytes":62382080,"gpuLocalBytes":6959104,"gpuNonLocalBytes":905216,"managedBytes":437712}
+{"phase":"capture-5s","frames":177,"workingSetBytes":86802432,"privateBytes":63193088,"gpuLocalBytes":6959104,"gpuNonLocalBytes":905216,"managedBytes":462256}
+{"phase":"after-pool","frames":178,"workingSetBytes":86773760,"privateBytes":62332928,"gpuLocalBytes":6959104,"gpuNonLocalBytes":905216,"managedBytes":470224}

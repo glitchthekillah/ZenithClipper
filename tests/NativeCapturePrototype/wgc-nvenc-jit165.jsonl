@@ -1,0 +1,14 @@
+{"phase":"before-device","frames":0,"workingSetBytes":34611200,"privateBytes":9011200,"gpuLocalBytes":0,"gpuNonLocalBytes":0,"managedBytes":77752}
+{"phase":"nvenc-created","frames":0,"workingSetBytes":89145344,"privateBytes":123060224,"gpuLocalBytes":12136448,"gpuNonLocalBytes":839680,"managedBytes":217048}
+{"mode":"direct-nvenc","width":2560,"height":1600,"fps":165,"qp":20,"bframes":0,"buffers":1,"ownedBgraTextures":1}
+{"phase":"nvenc-1s","frames":165,"workingSetBytes":112869376,"privateBytes":177135616,"gpuLocalBytes":99299328,"gpuNonLocalBytes":28340224,"managedBytes":364240}
+{"encoded":165,"captured":37,"repeats":129,"deadlineMisses":87,"elapsedSeconds":1.006985}
+{"phase":"nvenc-2s","frames":330,"workingSetBytes":120336384,"privateBytes":184045568,"gpuLocalBytes":99299328,"gpuNonLocalBytes":28340224,"managedBytes":478864}
+{"encoded":330,"captured":69,"repeats":262,"deadlineMisses":179,"elapsedSeconds":2.019789}
+{"phase":"nvenc-3s","frames":495,"workingSetBytes":120524800,"privateBytes":185004032,"gpuLocalBytes":99299328,"gpuNonLocalBytes":28340224,"managedBytes":609936}
+{"encoded":495,"captured":107,"repeats":389,"deadlineMisses":260,"elapsedSeconds":3.008322}
+{"phase":"nvenc-4s","frames":660,"workingSetBytes":120709120,"privateBytes":184434688,"gpuLocalBytes":99299328,"gpuNonLocalBytes":28340224,"managedBytes":749232}
+{"encoded":660,"captured":149,"repeats":512,"deadlineMisses":345,"elapsedSeconds":4.019111}
+{"phase":"nvenc-5s","frames":825,"workingSetBytes":120872960,"privateBytes":185327616,"gpuLocalBytes":99299328,"gpuNonLocalBytes":28340224,"managedBytes":847664}
+{"encoded":825,"captured":181,"repeats":645,"deadlineMisses":396,"elapsedSeconds":5.016032}
+{"phase":"nvenc-complete","frames":825,"workingSetBytes":121339904,"privateBytes":184967168,"gpuLocalBytes":99299328,"gpuNonLocalBytes":28340224,"managedBytes":855888}

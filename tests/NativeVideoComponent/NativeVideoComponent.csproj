@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+<PropertyGroup><OutputType>Exe</OutputType><AllowUnsafeBlocks>true</AllowUnsafeBlocks><TargetFramework>net10.0-windows10.0.26100.0</TargetFramework><EnableWindowsTargeting>true</EnableWindowsTargeting><EnableNETAnalyzers>false</EnableNETAnalyzers><PublishAot>true</PublishAot><RuntimeIdentifier>win-x64</RuntimeIdentifier><OptimizationPreference>Size</OptimizationPreference><InvariantGlobalization>true</InvariantGlobalization></PropertyGroup>
+<ItemGroup><ProjectReference Include="../../src/ZenithClipper.Native.Video/ZenithClipper.Native.Video.csproj" /></ItemGroup>
+</Project>
+

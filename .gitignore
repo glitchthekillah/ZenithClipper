@@ -1,0 +1,44 @@
+**/bin/
+**/obj/
+build/
+tools/
+.build-home/
+.packages/
+.smoke-home/
+.qa-home/
+.benchmark-home/
+*.user
+*.suo
+work/
+
+src/ZenithClipper.Native.Audio/FdkBuild/
+*.zcproj
+dist/
+
+# Local outputs, test artifacts and captures (never published)
+outputs/
+**/publish/
+**/*.pdb
+**/*.obj
+**/*.lib
+**/*.exp
+**/*.h264
+**/*.rgb
+**/*.pcm
+**/*.aac
+**/*.log
+tests/**/*.mp4
+tests/**/*.exe
+tests/**/*.dll
+tests/NativeVideoComponent/*-staging*/
+tests/NativeWgcCppFloor/cleanup-*/
+# FDK-AAC is no longer used or shipped
+**/zenith_fdk_aac.dll
+**/fdk-aac*.tar.gz
+**/FDK-AAC-NOTICE.txt
+tests/NativeAac.Fdk/
+tests/NativeFdkRestarts/
+# Local working notes
+PROJECT_FILES.txt
+build-log.txt
+pc_hashes.txt

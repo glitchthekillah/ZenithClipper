@@ -1,0 +1,3 @@
+{"phase":"before-device","frames":0,"workingSetBytes":34488320,"privateBytes":8994816,"gpuLocalBytes":0,"gpuNonLocalBytes":0,"managedBytes":77752}
+{"phase":"encode-before-prepare","frames":0,"workingSetBytes":88895488,"privateBytes":65437696,"gpuLocalBytes":6946816,"gpuNonLocalBytes":757760,"managedBytes":372760}
+{"phase":"encode-before-prepare-adapter0","frames":0,"workingSetBytes":89735168,"privateBytes":66252800,"gpuLocalBytes":0,"gpuNonLocalBytes":0,"managedBytes":372760}

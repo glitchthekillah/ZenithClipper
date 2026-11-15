@@ -1,0 +1,106 @@
+diff --git a/src/ZenithClipper.Native.Video/native/nvenc_shim.cpp b/tests/NativeWgcCppFloor/nvenc_shim_fence_candidate.cpp
+index 518bcd8..9102d32 100644
+--- a/src/ZenithClipper.Native.Video/native/nvenc_shim.cpp
++++ b/tests/NativeWgcCppFloor/nvenc_shim_fence_candidate.cpp
+@@ -1,6 +1,6 @@
+ #define WIN32_LEAN_AND_MEAN
+ #include <windows.h>
+-#include <d3d11_1.h>
++#include <d3d11_4.h>
+ #include <windows.graphics.directx.direct3d11.interop.h>
+ #include <stdio.h>
+ #include "nvEncodeAPI.h"
+@@ -17,6 +17,11 @@ struct Encoder {
+     ID3D11DeviceContext* context;
+     ID3D11Texture2D* texture;
+     ID3D11Query* fence;
++    ID3D11Fence* eventFence;
++    ID3D11DeviceContext4* eventContext;
++    HANDLE completionEvent;
++    UINT64 fenceValue;
++    bool eventDisabled;
+     ID3D11VideoDevice* videoDevice;
+     ID3D11VideoContext* videoContext;
+     ID3D11VideoContext1* videoContext1;
+@@ -55,6 +60,9 @@ extern "C" __declspec(dllexport) void __cdecl nc_destroy(Encoder* e) {
+     if (e->videoContext1) e->videoContext1->Release();
+     if (e->videoContext) e->videoContext->Release();
+     if (e->videoDevice) e->videoDevice->Release();
++    if(e->completionEvent)CloseHandle(e->completionEvent);
++    if(e->eventFence)e->eventFence->Release();
++    if(e->eventContext)e->eventContext->Release();
+     if (e->fence) e->fence->Release();
+     if (e->texture) e->texture->Release();
+     if (e->context) e->context->Release();
+@@ -120,6 +128,15 @@ static int CreateEncoder(ID3D11Device* device, unsigned width, unsigned height,
+     HR_CHECK(device->CreateTexture2D(&td, 0, &e->texture));
+     D3D11_QUERY_DESC qd = { D3D11_QUERY_EVENT, 0 };
+     HR_CHECK(device->CreateQuery(&qd, &e->fence));
++    ID3D11Device5* device5=0;
++    if(SUCCEEDED(device->QueryInterface(__uuidof(ID3D11Device5),(void**)&device5))){
++        HRESULT fenceHr=device5->CreateFence(0,D3D11_FENCE_FLAG_NONE,__uuidof(ID3D11Fence),(void**)&e->eventFence);
++        device5->Release();
++        if(SUCCEEDED(fenceHr)&&SUCCEEDED(e->context->QueryInterface(__uuidof(ID3D11DeviceContext4),(void**)&e->eventContext))){
++            e->completionEvent=CreateEventW(0,FALSE,FALSE,0);
++            // Event creation failure retains the query fallback.
++        }
++    }
+     NV_ENC_REGISTER_RESOURCE resource = {};
+     resource.version = NV_ENC_REGISTER_RESOURCE_VER; resource.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_DIRECTX;
+     resource.width = width; resource.height = height; resource.resourceToRegister = e->texture;
+@@ -207,15 +224,39 @@ static int CopySource(Encoder* e, ID3D11Texture2D* source) {
+     } else {
+         e->context->CopyResource(e->texture, source);
+     }
+-    e->context->End(e->fence); e->context->Flush();
+-    // Keep the source capture frame alive until the copy is complete, without a CPU pixel readback.
+-    DWORD start = GetTickCount();
+-    while ((hr = e->context->GetData(e->fence, 0, 0, 0)) == S_FALSE) {
+-        if (GetTickCount() - start > 3000) { source->Release(); return Fail(e, "GPU copy timeout", -1); }
+-        SwitchToThread();
++
++    bool eventCompleted=false;
++    if(e->completionEvent&&!e->eventDisabled){
++        // Clear a previous signal before associating this event with the next monotonic value.
++        // Any prior fallback query has already completed all work preceding its End.
++        if(!ResetEvent(e->completionEvent))hr=HRESULT_FROM_WIN32(GetLastError());
++        else{
++            UINT64 value=++e->fenceValue;
++            hr=e->eventContext->Signal(e->eventFence,value);
++            if(SUCCEEDED(hr)){
++                hr=e->eventFence->SetEventOnCompletion(value,e->completionEvent);
++            }
++            if(SUCCEEDED(hr)){
++                e->context->Flush();
++                DWORD result=WaitForSingleObject(e->completionEvent,3000);
++                if(result==WAIT_OBJECT_0){eventCompleted=true;}
++            }
++        }
++        if(!eventCompleted){e->eventDisabled=true;}
++    }
++    if(!eventCompleted){
++        // Preserve source ownership even if modern fence setup/wait fails. The query
++        // is ordered after conversion and any submitted fence work; only successful
++        // completion or a reported device error permits returning from this call.
++        e->context->End(e->fence);e->context->Flush();DWORD start=GetTickCount();
++        while((hr=e->context->GetData(e->fence,0,0,0))==S_FALSE){
++
++            if(GetTickCount()-start>3000){source->Release();return Fail(e,"GPU copy timeout",-1);}
++            SwitchToThread();
++        }
+     }
+     source->Release();
+-    if (FAILED(hr)) return Fail(e, "GPU copy completion", hr);
++    if(FAILED(hr))return Fail(e,"GPU copy completion",hr);
+     return 0;
+ }
+ extern "C" __declspec(dllexport) int __cdecl nc_copy_surface(Encoder* e, IUnknown* surface) {
+@@ -289,3 +330,8 @@ extern "C" __declspec(dllexport) int __cdecl nc_create_format(ID3D11Device* devi
+     unsigned fps, unsigned qp, const wchar_t* output, unsigned nv12, Encoder** result) {
+     return CreateEncoder(device, width, height, fps, qp, output, result, nv12 != 0);
+ }
++
++
++
++
++

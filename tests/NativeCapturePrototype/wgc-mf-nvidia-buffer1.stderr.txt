@@ -1,0 +1,3 @@
+Unhandled exception. System.Runtime.InteropServices.COMException (0xC00D6D60)
+   at EncodeProbe.Run(IDirect3DDevice device, GraphicsCaptureItem item, Int32 seconds, Int32 buffers, Action`2 snapshot) in C:\Users\szajf\My Projects\ZenithClipper\tests\NativeCapturePrototype\EncodeProbe.cs:line 80
+   at Program.Main(String[] args) in C:\Users\szajf\My Projects\ZenithClipper\tests\NativeCapturePrototype\Program.cs:line 46

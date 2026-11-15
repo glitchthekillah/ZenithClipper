@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><AllowUnsafeBlocks>true</AllowUnsafeBlocks><PublishAot>true</PublishAot><RuntimeIdentifier>win-x64</RuntimeIdentifier><OptimizationPreference>Size</OptimizationPreference><InvariantGlobalization>true</InvariantGlobalization></PropertyGroup><ItemGroup><Compile Remove="CaptureFloor/**/*.cs" /></ItemGroup></Project>
+
+

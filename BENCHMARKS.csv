@@ -1,0 +1,8 @@
+"Workload","File","PeakResidentMiB","PeakPrivateCommitMiB","AverageCpuCores","AverageCpuPercentOfMachine","SaveMedianMs","SavedClips","Under50MiB","TestedBinarySha256"
+"Previous build","desktop-comparison-old","107.32","178.71","0.226","1.41","105.03","3","False","9943B71ABD0548CF1EE5CCCD0F703B188D91142CCF39CC010EA5B7CF91C00BC0"
+"Optimized profiling build","desktop-comparison-candidate-v2","94.07","122.62","0.177","1.11","105.54","3","False","88CAFFC413120E53138601C4DC199C21472E4975FB400F2D73C27F544A057874"
+"Final installed build: uncontrolled workload, game process present","desktop-comparison-final","89.09","118.59","0.219","1.37","211.46","3","False","EE3602575B1D0358D6D58E92B87AECF47882937E17E9980667F614956E138006"
+"Earlier quiet desktop","native-daemon-shipping","88.19","167.05","0.142","0.89",,"3","False",
+"Previous build: Overwatch asset-load scene","overwatch-active-capture","108.69","182.79","0.323","2.02",,"3","False",
+"Optimized profiling build: ten restarts with GPU counters","minimum-overhead-v2-ten-restarts","99.53","129.84","0.16","1","105.85","10","False","88CAFFC413120E53138601C4DC199C21472E4975FB400F2D73C27F544A057874"
+"Optimized profiling build: 120 seconds","minimum-overhead-final-long","95.21","124.11","0.142","0.89","104.79","3","False","88CAFFC413120E53138601C4DC199C21472E4975FB400F2D73C27F544A057874"

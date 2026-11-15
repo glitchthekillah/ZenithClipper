@@ -1,0 +1,1 @@
+waitMode=query-poll calls=48 queryPolls=11040 eventWaits=0 eventFailures=1 waitSeconds=0.027084800
