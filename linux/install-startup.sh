@@ -7,9 +7,12 @@ if [[ "${1:-}" == "--remove" ]]; then
   printf 'ZenithClipper startup disabled.\n'
   exit
 fi
-[[ -x "$root/build/linux/zenithclipper" ]] || { printf 'Build Linux first.\n' >&2; exit 1; }
+# Works from a source checkout (build/linux) and from a release package (app/ next to this script's folder).
+engine=""
+for candidate in "$root/build/linux/zenithclipper" "$root/zenithclipper"; do [[ -x "$candidate" ]] && { engine="$candidate"; break; }; done
+[[ -n "$engine" ]] || { printf 'Build Linux first.\n' >&2; exit 1; }
 mkdir -p -- "$(dirname -- "$destination")"
-escaped="${root//\\/\\\\}"
+escaped="${engine//\\/\\\\}"
 escaped="${escaped//\"/\\\"}"
 escaped="${escaped//\$/\\\$}"
 escaped="${escaped//\`/\\\`}"
@@ -19,7 +22,7 @@ cat > "$destination" <<EOF
 Type=Application
 Name=ZenithClipper
 Comment=Start the rolling capture engine
-Exec="$escaped/build/linux/zenithclipper" daemon
+Exec="$escaped" daemon
 Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF

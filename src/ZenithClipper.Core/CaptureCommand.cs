@@ -24,7 +24,15 @@ public static class CaptureCommand
         if(amfNative&&!amfGraph)args.AddRange(["-f","lavfi","-i",$"vsrc_amf=monitor_index={s.Monitor}:framerate={fps}"]);
         else if (!amfGraph && platform == "windows") args.AddRange(["-f", "lavfi", "-i", $"ddagrab=output_idx={s.Monitor}:framerate={fps}:draw_mouse=1"]);
         else if (!amfGraph && wayland) args.AddRange(["-thread_queue_size", "64", "-f", "matroska", "-i", "pipe:0"]);
-        else if (!amfGraph) args.AddRange(["-thread_queue_size", "64", "-f", "x11grab", "-framerate", $"{fps}", "-video_size", s.LinuxVideoSize, "-i", s.LinuxDisplay]);
+        else if (!amfGraph)
+        {
+            // Follow the session's display (many distros run the desktop on :1) and, by default, record the whole screen
+            // at whatever size it is; x11grab sizes itself to the screen when no -video_size is given.
+            string display = string.IsNullOrWhiteSpace(s.LinuxDisplay) ? Environment.GetEnvironmentVariable("DISPLAY") is { Length: > 0 } d ? d : ":0" : s.LinuxDisplay;
+            args.AddRange(["-thread_queue_size", "64", "-f", "x11grab", "-framerate", $"{fps}"]);
+            if (s.LinuxVideoSize != "auto") args.AddRange(["-video_size", s.LinuxVideoSize]);
+            args.AddRange(["-i", display]);
+        }
         foreach (var audioSource in audioSources)
         {
             args.AddRange(["-thread_queue_size", "128"]);

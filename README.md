@@ -14,9 +14,13 @@ A local replay recorder with a small background engine, an on-demand control pan
 
 ## Download
 
-Grab `ZenithClipper-windows-x64.zip` from the latest GitHub release, unzip it anywhere and run `ZenithClipper.Windows.exe`. Needs Windows 10 or 11 (x64) and the .NET 10 Desktop Runtime. NVIDIA, AMD and Intel GPUs get hardware encoding; it never silently falls back to CPU encoding.
+Get the latest version from [Releases](https://github.com/glitchthekillah/ZenithClipper/releases/latest):
 
-Colours live under Settings > Appearance and apply to the panel and the editor.
+- **Windows 10/11:** `ZenithClipper_<version>_x64-setup.exe` (installer) or `ZenithClipper_<version>_x64-portable.zip` (no install). Everything is bundled, including .NET and FFmpeg.
+- **Ubuntu/Debian:** `zenithclipper_<version>_amd64.deb`, installed with `sudo apt install ./zenithclipper_<version>_amd64.deb`.
+- **Other Linux:** `zenithclipper-<version>-linux-x64.tar.gz`. Needs `ffmpeg`, `zenity`, `pactl` and `libmlt7`.
+
+Hardware encoding on NVIDIA, AMD and Intel GPUs; it never silently falls back to CPU encoding. Colours live under Settings > Appearance and apply to the panel and the editor.
 
 ## Start on Windows
 

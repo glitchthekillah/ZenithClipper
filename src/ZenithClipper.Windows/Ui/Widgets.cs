@@ -719,15 +719,17 @@ sealed class AccentSwatches : ZControl, IMeasured
     int Gap => Theme.S(8);
     List<Rectangle> Compute(int width)
     {
-        var list = new List<Rectangle>(); int x = 0, y = Theme.S(4);
+        // Inset by the selection ring's width so the ring around the first swatch is never clipped.
+        int inset = Theme.S(5);
+        var list = new List<Rectangle>(); int x = inset, y = inset;
         for (int i = 0; i < Count; i++)
         {
-            if (x > 0 && x + D > width) { x = 0; y += D + Gap; }
+            if (x > inset && x + D + inset > width) { x = inset; y += D + Gap; }
             list.Add(new Rectangle(x, y, D, D)); x += D + Gap;
         }
         return list;
     }
-    public int MeasureHeight(int width) => Compute(width).Max(b => b.Bottom) + Theme.S(4);
+    public int MeasureHeight(int width) => Compute(width).Max(b => b.Bottom) + Theme.S(5);
     protected override void OnResize(EventArgs e) { base.OnResize(e); boxes.Clear(); boxes.AddRange(Compute(Width)); }
     bool IsCustom => Appearance.AccentPresets.All(p => !p.Hex.Equals(selected, StringComparison.OrdinalIgnoreCase));
     protected override void OnMouseMove(MouseEventArgs e) { base.OnMouseMove(e); int h = boxes.FindIndex(b => b.Contains(e.Location)); if (h != hover) { hover = h; Invalidate(); } }
@@ -740,6 +742,12 @@ sealed class AccentSwatches : ZControl, IMeasured
         if (dialog.ShowDialog(FindForm()) == DialogResult.OK) Pick($"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}");
     }
     void Pick(string hex) { SetSelected(hex); Picked?.Invoke(selected); }
+    static (int R, int G, int B) Hue(double degrees)
+    {
+        double h = degrees / 60, x = 1 - Math.Abs(h % 2 - 1);
+        (double r, double g, double b) = (int)h switch { 0 => (1d, x, 0d), 1 => (x, 1d, 0d), 2 => (0d, 1d, x), 3 => (0d, x, 1d), 4 => (x, 0d, 1d), _ => (1d, 0d, x) };
+        return ((int)(r * 235 + 20), (int)(g * 235 + 20), (int)(b * 235 + 20));
+    }
     protected override void Draw(Graphics g)
     {
         if (boxes.Count != Count) { boxes.Clear(); boxes.AddRange(Compute(Width)); }
@@ -752,14 +760,25 @@ sealed class AccentSwatches : ZControl, IMeasured
             var inner = RectangleF.Inflate(b, -Theme.S(1f), -Theme.S(1f));
             if (custom)
             {
-                if (IsCustom && Appearance.TryParse(selected, out var c)) using (var fill = new SolidBrush(Color.FromArgb(c.R, c.G, c.B))) g.FillEllipse(fill, inner);
+                // Custom: a thin hue ring around a dark centre with a plus, or the chosen colour once one is picked.
+                if (IsCustom && Appearance.TryParse(selected, out var c)) { using var fill = new SolidBrush(Color.FromArgb(c.R, c.G, c.B)); g.FillEllipse(fill, inner); }
                 else
                 {
-                    using var path = new GraphicsPath(); path.AddEllipse(inner);
-                    using var rainbow = new PathGradientBrush(path) { CenterColor = Color.White, SurroundColors = [Color.FromArgb(255, 90, 90), Color.FromArgb(255, 210, 80), Color.FromArgb(90, 220, 130), Color.FromArgb(80, 170, 255), Color.FromArgb(190, 110, 255)] };
-                    g.FillEllipse(rainbow, inner);
+                    for (int k = 0; k < 36; k++)
+                    {
+                        var (r, gg, bb) = Hue(k * 10);
+                        using var pen = new Pen(Color.FromArgb(r, gg, bb), Theme.S(3f));
+                        g.DrawArc(pen, RectangleF.Inflate(inner, -Theme.S(1.5f), -Theme.S(1.5f)), k * 10 - 90, 10.5f);
+                    }
+                    using var centre = new SolidBrush(Theme.Raised);
+                    g.FillEllipse(centre, RectangleF.Inflate(inner, -Theme.S(3.5f), -Theme.S(3.5f)));
                 }
-                Theme.Glyph(g, Glyphs.Add, 8f, IsCustom ? Theme.Ink : Color.FromArgb(40, 40, 40), Rectangle.Round(b));
+                var plus = RectangleF.Inflate(b, -b.Width * .32f, -b.Height * .32f);
+                using (var pen = new Pen(IsCustom ? Theme.Ink : Theme.Text, Theme.S(1.6f)) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+                {
+                    g.DrawLine(pen, plus.Left, plus.Top + plus.Height / 2, plus.Right, plus.Top + plus.Height / 2);
+                    g.DrawLine(pen, plus.Left + plus.Width / 2, plus.Top, plus.Left + plus.Width / 2, plus.Bottom);
+                }
                 continue;
             }
             Appearance.TryParse(Appearance.AccentPresets[i].Hex, out var rgb);

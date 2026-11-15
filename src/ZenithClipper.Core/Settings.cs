@@ -22,8 +22,10 @@ public sealed record Settings
     public bool NeedsPerAppAudio => ExcludedApps.Length > 0 || AppVolumes.Values.Any(v => v != 100);
     public string ClipDirectory { get; init; } = Path.Combine(AppPaths.Root, "clips");
     public string FfmpegPath { get; init; } = "";
-    public string LinuxDisplay { get; init; } = ":0.0";
-    public string LinuxVideoSize { get; init; } = "1920x1080";
+    /// <summary>X display to record; empty follows $DISPLAY (falls back to :0).</summary>
+    public string LinuxDisplay { get; init; } = "";
+    /// <summary>"auto" records the whole screen at its real size; or a fixed WIDTHxHEIGHT region from the top-left.</summary>
+    public string LinuxVideoSize { get; init; } = "auto";
     public string LinuxRenderNode { get; init; } = "/dev/dri/renderD128";
     public string ClipHotkey { get; init; } = "Alt+C";
     public string PanelHotkey { get; init; } = "Shift+~";
@@ -41,7 +43,7 @@ public sealed record Settings
         if (string.IsNullOrWhiteSpace(ClipDirectory)) throw new ArgumentException("Choose a clip directory.");
         if (AppVolumes is null || AppVolumes.Count > 64 || AppVolumes.Any(x => string.IsNullOrWhiteSpace(x.Key) || x.Key.Length > 128 || x.Value is < 0 or > 200)) throw new ArgumentException("App volumes must be 0–200% for at most 64 apps.");
         if (ExcludedApps is null || ExcludedApps.Length > 64 || ExcludedApps.Any(x => string.IsNullOrWhiteSpace(x) || x.Length > 128)) throw new ArgumentException("Invalid excluded app list.");
-        if (!System.Text.RegularExpressions.Regex.IsMatch(LinuxVideoSize, @"^\d{2,5}x\d{2,5}$")) throw new ArgumentException("Linux video size must look like 1920x1080.");
+        if (LinuxVideoSize != "auto" && !System.Text.RegularExpressions.Regex.IsMatch(LinuxVideoSize, @"^\d{2,5}x\d{2,5}$")) throw new ArgumentException("Linux video size must be auto or look like 1920x1080.");
         HotkeySpec.Parse(ClipHotkey); HotkeySpec.Parse(PanelHotkey);
         if (HotkeySpec.Parse(ClipHotkey) == HotkeySpec.Parse(PanelHotkey)) throw new ArgumentException("Hotkeys must differ.");
     }
@@ -65,7 +67,15 @@ public static class SettingsChanges
 
 public static class AppPaths
 {
-    public static string Root => Environment.GetEnvironmentVariable("ZENITHCLIPPER_HOME") ?? (File.Exists(Path.Combine(AppContext.BaseDirectory,"portable.flag")) ? Path.Combine(AppContext.BaseDirectory,"data") : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ZenithClipper"));
+    public static string Root => Environment.GetEnvironmentVariable("ZENITHCLIPPER_HOME") ?? PortableRoot() ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ZenithClipper");
+    /// <summary>Portable copies keep data beside the app. The editor lives in a sibling folder (editor\ next to windows\),
+    /// so it follows the app's portable.flag too; otherwise panel and editor would read different settings.</summary>
+    static string? PortableRoot()
+    {
+        foreach (var dir in new[] { AppContext.BaseDirectory, Path.Combine(AppContext.BaseDirectory, "..", "windows"), Path.Combine(AppContext.BaseDirectory, "..", "app") })
+            if (File.Exists(Path.Combine(dir, "portable.flag"))) return Path.GetFullPath(Path.Combine(dir, "data"));
+        return null;
+    }
     public static string Config => Path.Combine(Root, "settings.json");
     public static string Buffer => Path.Combine(Root, "buffer");
     public static JsonSerializerOptions Json { get; } = CoreJsonContext.CreateApplicationOptions();
