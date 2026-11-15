@@ -55,7 +55,7 @@ foreach($asset in @('ZenithClipper.Recorder.exe','nvenc_shim.dll','zenith_aac.dl
 $nvencNotice=Join-Path $destination 'licenses/nvenc'
 New-Item -ItemType Directory -Path $nvencNotice -Force|Out-Null
 Copy-Item -LiteralPath (Join-Path $root 'src/ZenithClipper.Native.Video/native/nvEncodeAPI.h') -Destination $nvencNotice -Force
-& "$PSScriptRoot/write-benchmarks.ps1"
+if ($PSVersionTable.PSVersion.Major -ge 7) { & "$PSScriptRoot/write-benchmarks.ps1" } else { Write-Host 'Skipping benchmark table (needs PowerShell 7).' }
 Write-Host "Built: $destination/ZenithClipper.Windows.exe (native NVIDIA recorder included)"
 
 & "$PSScriptRoot/build-editor.ps1"
