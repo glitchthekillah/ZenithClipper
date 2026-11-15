@@ -1,21 +1,30 @@
 name: release
-# Builds the full Windows package (panel, engine, NVIDIA recorder, editor) and attaches it to a GitHub release.
-# Push a tag like v1.0.0 to publish; run it by hand to just get the zip as a build artifact.
+# Builds every download and attaches it to the GitHub release for the tag:
+#   Windows: installer (setup.exe) and portable zip.  Linux: tar.gz and .deb.  Plus SHA256SUMS.
+# Publish a release (gh release create vX.Y.Z --notes-file ...) and this fills it with files.
+# It can also be run by hand for an existing tag.
 on:
-  push:
-    tags: ['v*']
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build, for example v1.0.0
+        required: true
 permissions:
   contents: write
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
 jobs:
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      # MSVC for the native recorder and nvenc_shim.dll.
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
@@ -34,26 +43,115 @@ jobs:
           $hash = (Get-FileHash $zip -Algorithm SHA256).Hash
           if ($hash -ne '1F8C50CE7B125A2F0DCB60777B358E86BAF03B8515982612B6ADAE10A83D93A5') { throw "Shotcut archive checksum mismatch: $hash" }
           Expand-Archive $zip tools/mlt-runtime/package -Force
-          if (!(Test-Path tools/mlt-runtime/package/Shotcut/libmlt-7.dll)) { Get-ChildItem tools/mlt-runtime/package; throw 'libmlt-7.dll not where build-editor.ps1 expects it.' }
-      - name: Build package
+          if (!(Test-Path tools/mlt-runtime/package/Shotcut/libmlt-7.dll)) { throw 'libmlt-7.dll not where build-editor.ps1 expects it.' }
+      - name: Build
         shell: pwsh
         run: ./scripts/package-windows.ps1
-      - name: Zip
+      # Layout matters: the editor finds its .NET runtime at ..\windows\runtime and the panel finds the editor at ..\editor.
+      - name: Portable zip and installer
         shell: pwsh
         run: |
-          $out = "dist/ZenithClipper"
-          New-Item -ItemType Directory -Force $out | Out-Null
-          Copy-Item build/windows/* $out -Recurse -Force
-          New-Item -ItemType Directory -Force "$out/editor" | Out-Null
-          Copy-Item build/editor/* "$out/editor" -Recurse -Force
-          Copy-Item README.md, THIRD_PARTY.md $out -Force
-          Compress-Archive "$out/*" dist/ZenithClipper-windows-x64.zip -Force
+          $version = "$env:TAG".TrimStart('v')
+          $root = "dist/ZenithClipper"
+          New-Item -ItemType Directory -Force "$root/windows", "$root/editor" | Out-Null
+          Copy-Item build/windows/* "$root/windows" -Recurse -Force
+          Copy-Item build/editor/* "$root/editor" -Recurse -Force
+          Get-ChildItem $root -Recurse -Filter *.pdb | Remove-Item
+          Copy-Item README.md, THIRD_PARTY.md $root -Force
+          Set-Content "$root/ZenithClipper.cmd" "@echo off`r`nstart `"`" `"%~dp0windows\ZenithClipper.Windows.exe`" panel" -Encoding ascii
+          Set-Content "$root/ZenithClipper Editor.cmd" "@echo off`r`nstart `"`" `"%~dp0windows\ZenithClipper.Windows.exe`" editor" -Encoding ascii
+          Compress-Archive "$root" "dist/ZenithClipper_${version}_x64-portable.zip" -CompressionLevel Optimal
+          choco install innosetup -y --no-progress | Out-Null
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Qp "/DAppVersion=$version" "/DSourceRoot=$((Resolve-Path $root).Path)" "/DOutputDir=$((Resolve-Path dist).Path)" installer/ZenithClipper.iss
+          if ($LASTEXITCODE) { throw "Installer build failed ($LASTEXITCODE)" }
+          Get-ChildItem dist -File | Format-Table Name, Length
       - uses: actions/upload-artifact@v4
         with:
-          name: ZenithClipper-windows-x64
-          path: dist/ZenithClipper-windows-x64.zip
-      - if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+          name: windows
+          path: |
+            dist/*.zip
+            dist/*-setup.exe
+
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
         with:
-          files: dist/ZenithClipper-windows-x64.zip
-          generate_release_notes: true
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          root="dist/zenithclipper-${version}-linux-x64"
+          mkdir -p "$root/app/linux" "$root/editor"
+          # Self-contained: no .NET install needed. The engine finds its helpers in app/linux and the editor at ../editor.
+          dotnet publish src/ZenithClipper.App -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=false -o "$root/app"
+          dotnet publish src/ZenithClipper.Editor.Desktop -c Release -r linux-x64 --self-contained true -o "$root/editor"
+          find "$root" -name '*.pdb' -delete
+          cp linux/*.py linux/*.sh "$root/app/linux/"
+          cp README.md THIRD_PARTY.md docs/LINUX.md "$root/"
+          cat > "$root/zenithclipper" <<'EOF'
+          #!/usr/bin/env bash
+          # ZenithClipper launcher: "zenithclipper" opens the controls, "zenithclipper daemon" starts recording,
+          # "zenithclipper editor" opens the editor, "zenithclipper save 30" saves the last 30 seconds.
+          here="$(cd -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")" && pwd)"
+          exec "$here/app/zenithclipper" "${@:-panel}"
+          EOF
+          sed -i 's/^          //' "$root/zenithclipper"
+          chmod +x "$root/zenithclipper" "$root/app/zenithclipper" "$root/editor/ZenithClipper.Editor" "$root"/app/linux/*.sh
+          tar -C dist -czf "dist/zenithclipper-${version}-linux-x64.tar.gz" "zenithclipper-${version}-linux-x64"
+      - name: Debian package
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          pkg="dist/deb"
+          mkdir -p "$pkg/DEBIAN" "$pkg/opt" "$pkg/usr/bin" "$pkg/usr/share/applications" "$pkg/usr/share/icons/hicolor/256x256/apps"
+          cp -r "dist/zenithclipper-${version}-linux-x64" "$pkg/opt/zenithclipper"
+          ln -s /opt/zenithclipper/zenithclipper "$pkg/usr/bin/zenithclipper"
+          if [ -f assets/zenithclipper.png ]; then cp assets/zenithclipper.png "$pkg/usr/share/icons/hicolor/256x256/apps/zenithclipper.png"; fi
+          printf '[Desktop Entry]\nType=Application\nName=ZenithClipper\nComment=Instant replay recorder\nExec=zenithclipper panel\nIcon=zenithclipper\nCategories=AudioVideo;Recorder;\nTerminal=false\n' > "$pkg/usr/share/applications/zenithclipper.desktop"
+          printf '[Desktop Entry]\nType=Application\nName=ZenithClipper Editor\nComment=Trim and edit your clips\nExec=zenithclipper editor\nIcon=zenithclipper\nCategories=AudioVideo;Video;AudioVideoEditing;\nTerminal=false\n' > "$pkg/usr/share/applications/zenithclipper-editor.desktop"
+          size=$(du -sk "$pkg" | cut -f1)
+          cat > "$pkg/DEBIAN/control" <<EOF
+          Package: zenithclipper
+          Version: ${version}
+          Architecture: amd64
+          Maintainer: glitchthekillah <noreply@github.com>
+          Installed-Size: ${size}
+          Depends: ffmpeg, python3, zenity, pulseaudio-utils, xdg-utils, libmlt7, libmlt-data
+          Recommends: python3-gi, gir1.2-gstreamer-1.0, gstreamer1.0-pipewire, gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad
+          Homepage: https://github.com/glitchthekillah/ZenithClipper
+          Description: Instant replay recorder with a built-in clip editor
+           Keeps the last minutes of your screen in a rolling buffer and saves a clip on a hotkey.
+          EOF
+          sed -i 's/^          //' "$pkg/DEBIAN/control"
+          dpkg-deb --root-owner-group --build "$pkg" "dist/zenithclipper_${version}_amd64.deb"
+          ls -la dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            dist/*.tar.gz
+            dist/*.deb
+
+  publish:
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: files
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          cd files
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+      # Attaches to the existing release (keeps its author, title and notes); creates one only for a manual run.
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          files: files/*
