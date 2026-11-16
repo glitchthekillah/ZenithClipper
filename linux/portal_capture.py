@@ -7,14 +7,11 @@ import os
 import signal
 import sys
 import uuid
-import ctypes
 
-# Stop actual screen sharing if the engine disappears, including before portal consent.
+# Stop screen sharing if the engine disappears, including before portal consent. This watches the engine *process*
+# (PR_SET_PDEATHSIG follows the starting thread, and .NET retires idle threads, which stopped capture after a minute).
 parent = os.getppid()
-libc = ctypes.CDLL(None, use_errno=True)
-if libc.prctl(1, signal.SIGTERM, 0, 0, 0) != 0:
-    raise OSError(ctypes.get_errno(), "Could not set capture parent-death signal")
-if parent == 1 or os.getppid() != parent:
+if parent == 1:
     sys.exit(1)
 
 import gi
@@ -125,6 +122,12 @@ def main():
     gst_bus.add_signal_watch()
     gst_bus.connect("message", message)
     GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, lambda: (loop.quit(), False)[1])
+    def engine_alive():
+        if os.getppid() != parent:
+            loop.quit()
+            return False
+        return True
+    GLib.timeout_add_seconds(1, engine_alive)
     pipeline.set_state(Gst.State.PLAYING)
     loop.run()
     if errors:

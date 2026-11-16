@@ -58,9 +58,20 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Run]
 Filename: "{app}\windows\ZenithClipper.Windows.exe"; Parameters: "panel"; WorkingDir: "{app}\windows"; Description: "Open ZenithClipper"; Flags: nowait postinstall skipifsilent
+; In-app updates run this installer with /SILENT /relaunch=1: reopen the panel (which restarts recording) afterwards.
+Filename: "{app}\windows\ZenithClipper.Windows.exe"; Parameters: "panel"; WorkingDir: "{app}\windows"; Flags: nowait; Check: Relaunch
+; Daily update check: a few seconds of work, shows a notification only when a new version is out.
+Filename: "{sys}\schtasks.exe"; Parameters: "/Create /F /SC DAILY /ST 12:00 /TN ""ZenithClipper update check"" /TR ""\""{app}\windows\ZenithClipper.Windows.exe\"" --update-check"""; Flags: runhidden
 
 [UninstallRun]
+Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /F /TN ""ZenithClipper update check"""; Flags: runhidden; RunOnceId: "RemoveUpdateTask"
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM ZenithClipper.Recorder.exe"; Flags: runhidden; RunOnceId: "StopRecorder"
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM zenithclipper.exe"; Flags: runhidden; RunOnceId: "StopEngine"
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM ZenithClipper.Windows.exe"; Flags: runhidden; RunOnceId: "StopPanel"
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM ZenithClipper.Editor.exe"; Flags: runhidden; RunOnceId: "StopEditor"
+
+[Code]
+function Relaunch: Boolean;
+begin
+  Result := WizardSilent and (ExpandConstant('{param:relaunch|0}') = '1');
+end;

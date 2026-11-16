@@ -22,6 +22,13 @@ try
         else await LinuxUi.ShowAsync(command, args.Skip(1).ToArray());
         return 0;
     }
+    if (command == "check-update")
+    {
+        var u = await Updates.CheckAsync();
+        Console.WriteLine(u is null ? $"Up to date ({Updates.Current.ToString(3)})" : $"Update {u.Version.ToString(3)} available ({Updates.Flavor}): {u.DownloadName ?? "open " + u.PageUrl}");
+        if (u is not null && args.Contains("--download")) Console.WriteLine("Verified download: " + await Updates.DownloadAsync(u));
+        return 0;
+    }
     if (command == "config-path") { Console.WriteLine(AppPaths.Config); return 0; }
     if (command == "pipe-name") { Console.WriteLine(Control.PipeName); return 0; }
     if (command == "init") { if (!File.Exists(AppPaths.Config)) AppPaths.Save(new Settings()); Console.WriteLine(AppPaths.Config); return 0; }
@@ -47,6 +54,7 @@ catch (Exception ex) { Console.Error.WriteLine(ex.Message); return 1; }
 static async Task<int> RunDaemon(bool allowCompatibilityFallback)
 {
     Directory.CreateDirectory(AppPaths.Root);
+    if (OperatingSystem.IsLinux()) LinuxUi.NotifyIfUpdateAvailable();
     FileStream instance;
     try { instance = new FileStream(Path.Combine(AppPaths.Root, "engine.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
     catch (IOException) { Console.Error.WriteLine("ZenithClipper engine is already running."); return 2; }
@@ -70,12 +78,20 @@ static async Task<int> RunDaemon(bool allowCompatibilityFallback)
         var server = new ControlServer(recorder, shutdown);
         server.SettingsChanged += value => { hotkeys?.Dispose(); hotkeys = new(value, Save, Panel); if (hotkeys.Error != null) Log(hotkeys.Error); };
         var serverTask = server.RunAsync(shutdown.Token);
+        Recorder.Log = Log;
         Log($"Engine started. Data={AppPaths.Root}; Pipe={Control.PipeName}");
         try
         {
             if (settings.AutoStartCapture) { try { await recorder.StartAsync(shutdown.Token); } catch (Exception ex) { Log("Capture failed: " + ex.Message); } }
             using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-            while (await timer.WaitForNextTickAsync(shutdown.Token)) { if(serverTask.IsCompleted) await serverTask; await recorder.TickAsync(shutdown.Token); }
+            string? lastError = null, lastNotice = null;
+            while (await timer.WaitForNextTickAsync(shutdown.Token))
+            {
+                if(serverTask.IsCompleted) await serverTask; await recorder.TickAsync(shutdown.Token);
+                var status = recorder.Status();
+                if (status.Error != lastError) { if (status.Error is { Length: > 0 }) Log("Capture error: " + status.Error.Replace('\n', ' ')); lastError = status.Error; }
+                if (status.Notice != lastNotice) { if (status.Notice is { Length: > 0 }) Log(status.Notice.Replace('\n', ' ')); lastNotice = status.Notice; }
+            }
         }
         catch (OperationCanceledException) when (shutdown.IsCancellationRequested) { }
         finally { shutdown.Cancel(); hotkeys.Dispose(); await serverTask; }

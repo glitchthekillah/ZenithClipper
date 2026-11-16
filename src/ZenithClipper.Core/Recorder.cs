@@ -100,7 +100,7 @@ public sealed class Recorder : IRecorderEngine
                 }
                 else
                 {
-                    linuxAudio = new(settings); await linuxAudio.StartAsync(ct); source = linuxAudio.Source;
+                    linuxAudio = new(settings); await linuxAudio.StartAsync(ct); source = linuxAudio.Source; if (linuxAudio.Notice != null) notice = linuxAudio.Notice;
                 }
             }
             bool wayland = OperatingSystem.IsLinux() && !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"));
@@ -145,6 +145,16 @@ public sealed class Recorder : IRecorderEngine
         }
         finally { lifecycle.Release(); }
     }
+    readonly List<DateTimeOffset> recoveries = [];
+    /// <summary>Engine log sink (set by the daemon); capture failures are written here with FFmpeg's full output.</summary>
+    public static Action<string>? Log;
+    /// <summary>FFmpeg prints harmless warnings first (frame-rate guesses, channel layouts); keep the lines that explain a failure.</summary>
+    internal static string Summarize(string tail)
+    {
+        string[] noise = ["not enough frames to estimate rate", "Guessed Channel Layout", "consider increasing", "Stream #", "Metadata:", "Duration:", "Input #", "Output #", "encoder         :", "Press [q]", "frame=", "size=", "Side data:"];
+        var lines = tail.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(l => !noise.Any(n => l.Contains(n, StringComparison.Ordinal))).ToList();
+        return string.Join("\n", lines.TakeLast(6));
+    }
     async Task DrainErrorsAsync(Process process)
     {
         while (await process.StandardError.ReadLineAsync() is { } line)
@@ -178,8 +188,14 @@ public sealed class Recorder : IRecorderEngine
             if (ffmpeg == null) return;
             if (ffmpeg.HasExited || (OperatingSystem.IsWindows() && windowsAudio?.Faulted == true) || audioPump?.IsFaulted == true || portal is { HasExited:true } || (portal!=null && audioPump?.IsCompleted==true))
             {
-                error = errorTail.Length > 0 ? errorTail : "Capture or audio stream ended; resume to retry.";
-                await StopInternalAsync(); state = "Error"; return;
+                error = Summarize(errorTail) is { Length: > 0 } why ? why : "Capture or audio stream ended; resume to retry.";
+                Log?.Invoke($"Capture ended (exit {(ffmpeg.HasExited ? ffmpeg.ExitCode : 0)}): " + string.Join(" | ", errorTail.Split('\n', StringSplitOptions.RemoveEmptyEntries).TakeLast(15)));
+                await StopInternalAsync(); state = "Error";
+                // Recover by itself a few times (a display change, an audio device going away) before giving up;
+                // the buffer is kept, so a save still reaches back before the hiccup.
+                recoveries.RemoveAll(t => DateTimeOffset.UtcNow - t > TimeSpan.FromMinutes(10));
+                if (recoveries.Count < 3) { recoveries.Add(DateTimeOffset.UtcNow); notice = "Capture stopped unexpectedly and was restarted: " + error; restart = true; }
+                return;
             }
             if (OperatingSystem.IsWindows() && settings.CaptureAudio)
             {

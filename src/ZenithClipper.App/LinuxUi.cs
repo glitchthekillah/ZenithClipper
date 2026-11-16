@@ -24,7 +24,7 @@ static class LinuxUi
         while (true)
         {
             var response = await Control.SendAsync(new("status")); var status = response.Status;
-            var choice = await Dialog("--list", "--title=ZenithClipper controls", $"--text={status?.State} — {status?.BufferedSeconds:F1}s buffered\n{status?.Error}", "--column=Action", "Save clip", "Pause capture", "Resume capture", "Settings", "Keyboard shortcuts", "Open editor", "Open clips", "Quit engine", "--height=420", "--width=600");
+            var choice = await Dialog("--list", "--title=ZenithClipper controls", $"--text={status?.State} — {status?.BufferedSeconds:F1}s buffered\n{status?.Error}", "--column=Action", "Save clip", "Pause capture", "Resume capture", "Settings", "Keyboard shortcuts", "Check for updates", "Open editor", "Open clips", "Quit engine", "--height=420", "--width=600");
             if (choice == null) return;
             try
             {
@@ -35,6 +35,7 @@ static class LinuxUi
                     case "Resume capture": Check(await Control.SendAsync(new("resume"))); break;
                     case "Settings": await ConfigureAsync(); break;
                     case "Keyboard shortcuts": await ConfigureShortcutsAsync(); break;
+                    case "Check for updates": await UpdateAsync(); break;
                     case "Open editor": LaunchEditor(); break;
                     case "Open clips": using (var p = Process.Start(new ProcessStartInfo("xdg-open") { ArgumentList = { AppPaths.Load().ClipDirectory } })) { } break;
                     case "Quit engine": Check(await Control.SendAsync(new("shutdown"))); return;
@@ -90,4 +91,36 @@ static class LinuxUi
         }
         catch (Exception ex) { await Dialog("--error", "--text=" + ex.Message); }
     }
+
+    /// <summary>AppImage: downloads the new AppImage, checks it against SHA256SUMS and swaps it in place, then reopens.
+    /// .deb and tar.gz installs open the release page (their package manager or the user installs those).</summary>
+    static async Task UpdateAsync()
+    {
+        var update = await Updates.CheckAsync();
+        if (update is null) { await Dialog("--info", "--title=ZenithClipper", $"--text=You're up to date (version {Updates.Current.ToString(3)})."); return; }
+        bool self = Updates.CanSelfUpdate && update.DownloadUrl is not null;
+        if (await Dialog("--question", "--title=ZenithClipper update", $"--text=ZenithClipper {update.Version.ToString(3)} is available.", $"--ok-label={(self ? "Update now" : "Open download page")}", "--cancel-label=Later") == null) return;
+        if (!self) { using var _ = Process.Start(new ProcessStartInfo("xdg-open") { ArgumentList = { update.PageUrl } }); return; }
+        string current = Environment.GetEnvironmentVariable("APPIMAGE")!;
+        string downloaded = await Updates.DownloadAsync(update);
+        // Same folder, then rename over the running file: Linux keeps the old inode alive until it exits.
+        string staged = current + ".new";
+        File.Copy(downloaded, staged, true);
+        if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(staged, File.GetUnixFileMode(current) | UnixFileMode.UserExecute);
+        File.Move(staged, current, true); File.Delete(downloaded);
+        try { await Control.SendAsync(new("shutdown")); } catch (Exception ex) when (ex is IOException or TimeoutException) { }
+        using (Process.Start(new ProcessStartInfo(current) { UseShellExecute = false, ArgumentList = { "panel" } })) { }
+        Environment.Exit(0);
+    }
+
+    /// <summary>On engine start (at most every 20 hours): a desktop notification when a new version is out, once per version.</summary>
+    public static void NotifyIfUpdateAvailable() => _ = Task.Run(async () =>
+    {
+        if (!Updates.Due(20)) return;
+        var update = await Updates.CheckAsync();
+        if (update is null || Updates.State.Notified == update.Tag) return;
+        Updates.SaveState(Updates.State with { Notified = update.Tag });
+        try { using var _ = Process.Start(new ProcessStartInfo("notify-send") { ArgumentList = { "--app-name=ZenithClipper", $"ZenithClipper {update.Version.ToString(3)} is available", "Open the ZenithClipper controls and choose Check for updates." } }); }
+        catch (System.ComponentModel.Win32Exception) { }
+    });
 }

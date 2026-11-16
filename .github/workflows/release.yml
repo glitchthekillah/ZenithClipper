@@ -1,6 +1,6 @@
 name: release
 # Builds every download and attaches it to the GitHub release for the tag:
-#   Windows: installer (setup.exe) and portable zip.  Linux: tar.gz and .deb.  Plus SHA256SUMS.
+#   Windows: installer (setup.exe) and portable zip.  Linux: AppImage, .deb and tar.gz.  Plus SHA256SUMS.
 # Publish a release (gh release create vX.Y.Z --notes-file ...) and this fills it with files.
 # It can also be run by hand for an existing tag.
 on:
@@ -28,6 +28,11 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+      - name: Stamp version
+        shell: pwsh
+        run: |
+          $v = "$env:TAG".TrimStart('v')
+          (Get-Content Directory.Build.props -Raw) -replace '<Version>[^<]*</Version>', "<Version>$v</Version>" | Set-Content Directory.Build.props -NoNewline
       - name: Fetch FFmpeg
         shell: pwsh
         run: |
@@ -85,6 +90,7 @@ jobs:
         run: |
           set -euo pipefail
           version="${TAG#v}"
+          sed -i "s#<Version>[^<]*</Version>#<Version>${version}</Version>#" Directory.Build.props
           root="dist/zenithclipper-${version}-linux-x64"
           mkdir -p "$root/app/linux" "$root/editor"
           # Self-contained: no .NET install needed. The engine finds its helpers in app/linux and the editor at ../editor.
@@ -130,12 +136,24 @@ jobs:
           sed -i 's/^          //' "$pkg/DEBIAN/control"
           dpkg-deb --root-owner-group --build "$pkg" "dist/zenithclipper_${version}_amd64.deb"
           ls -la dist
+      - name: AppImage
+        run: |
+          version="${TAG#v}"
+          bash scripts/build-appimage.sh "$version" "dist/zenithclipper-${version}-linux-x64" dist
+          # Smoke test from inside the AppImage with no system MLT: the editor must start on the bundled copy.
+          sudo apt-get remove -y -qq libmlt7 libmlt-data frei0r-plugins >/dev/null
+          cd dist && "./ZenithClipper-${version}-x86_64.AppImage" --appimage-extract >/dev/null
+          here="$PWD/squashfs-root"
+          env LD_LIBRARY_PATH="$here/usr/lib" MLT_REPOSITORY="$here/usr/lib/mlt-7" MLT_DATA="$here/usr/share/mlt-7" MLT_PROFILES_PATH="$here/usr/share/mlt-7/profiles" FREI0R_PATH="$here/usr/lib/frei0r-1" \
+            timeout 300 "$here/usr/lib/zenithclipper/editor/ZenithClipper.Editor" --headless-smoke | tail -3
+          rm -rf squashfs-root
       - uses: actions/upload-artifact@v4
         with:
           name: linux
           path: |
             dist/*.tar.gz
             dist/*.deb
+            dist/*.AppImage
 
   publish:
     needs: [windows, linux]

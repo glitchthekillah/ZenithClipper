@@ -13,7 +13,11 @@ public sealed class LinuxAudio : IAsyncDisposable
     readonly string sink = "zenithclipper_" + Environment.ProcessId;
     string playback = "";
     uint captureSink;
-    public string Source => sink + ".monitor";
+    bool direct;
+    /// <summary>The recording sink's monitor, or the normal output's monitor when routing isn't possible (see StartAsync).</summary>
+    public string Source => direct ? playback + ".monitor" : sink + ".monitor";
+    /// <summary>Set when app exclusion had to be switched off; shown to the user.</summary>
+    public string? Notice { get; private set; }
     public LinuxAudio(Settings settings) => this.settings = settings;
     static async Task<string> Pactl(CancellationToken ct, params string[] args)
     {
@@ -27,7 +31,15 @@ public sealed class LinuxAudio : IAsyncDisposable
         modules.Add((await Pactl(ct,"load-module", "module-null-sink", $"sink_name={sink}", "sink_properties=device.description=ZenithClipperCapture")).Trim());
         try
         {
-            modules.Add((await Pactl(ct,"load-module", "module-loopback", $"source={Source}", $"sink={playback}", "latency_msec=20", "source_dont_move=true", "sink_dont_move=true")).Trim());
+            try { modules.Add((await Pactl(ct,"load-module", "module-loopback", $"source={Source}", $"sink={playback}", "latency_msec=20", "source_dont_move=true", "sink_dont_move=true")).Trim()); }
+            catch (IOException)
+            {
+                // Some outputs (e.g. PulseAudio's auto_null, some HDMI/Bluetooth states) refuse a loopback. Moving apps to our
+                // sink would then silence them, so record the normal output directly and leave every app where it is.
+                await DisposeAsync(); modules.Clear(); direct = true;
+                Notice = "Recording all desktop audio: this sound setup doesn't allow keeping individual apps out of clips.";
+                return;
+            }
             using var sinks = JsonDocument.Parse(await Pactl(ct,"-f", "json", "list", "sinks"));
             captureSink = sinks.RootElement.EnumerateArray().Single(x => x.GetProperty("name").GetString() == sink).GetProperty("index").GetUInt32();
             await RefreshAsync(ct);
@@ -36,6 +48,7 @@ public sealed class LinuxAudio : IAsyncDisposable
     }
     public async Task RefreshAsync(CancellationToken ct=default)
     {
+        if (direct) return;
         await gate.WaitAsync(ct);
         try
         {

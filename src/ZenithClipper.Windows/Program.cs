@@ -17,7 +17,9 @@ static class Program
         if (PanelStartupProbe.Enabled) { PanelStartupProbe.Run(); return; }
         try
         {
-            if (args.FirstOrDefault() == "--background") { EngineClient.StartEngine(); return; }
+            if (args.FirstOrDefault() == "--background") { EngineClient.StartEngine(); UpdateNotifier.Run(force: false); return; }
+            if (args.FirstOrDefault() == "--update-check") { UpdateNotifier.Run(force: args.Contains("--now")); return; }
+            if (args.FirstOrDefault() == "update") { PanelForm.UpdateOnOpen = true; args = ["panel"]; }
             if (args.FirstOrDefault() == "--snapshot" && args.Length > 1) { Directory.CreateDirectory(args[1]); PanelForm.SnapshotDir = args[1]; Application.Run(new PanelForm()); return; }
             bool editor = args.FirstOrDefault() == "editor";
             if(editor && EditorLauncher.Launch(args.Skip(1).FirstOrDefault()))return;

@@ -71,6 +71,8 @@ public sealed class PanelForm : Form
     string clipFolder = "";
     bool busy, polling, loadingSettings, offline;
 
+    /// <summary>Opened from the update notification: start updating straight away.</summary>
+    internal static bool UpdateOnOpen;
     public PanelForm()
     {
         PanelStartupProbe.Mark("panel_fields_ready");
@@ -107,6 +109,8 @@ public sealed class PanelForm : Form
                 initialConnectionScheduled = true;
                 fadeIn.Start();
                 BeginInvoke(async () => { if (IsDisposed) return; EnsureHome(); await ConnectAsync(); });
+                // Look for a new version at most every 6 hours (or right away when opened from the update notification).
+                if (UpdateOnOpen || Updates.Due(6)) BeginInvoke(async () => await CheckForUpdateAsync(quiet: true, install: UpdateOnOpen));
             }
         };
         Shown += (_, _) =>
@@ -479,6 +483,9 @@ public sealed class PanelForm : Form
         var logButton = new ZButton("Open log", ButtonKind.Secondary, Glyphs.Open) { AutoWidth = false, Width = Theme.S(140) };
         logButton.Click += (_, _) => { string log = Path.Combine(AppPaths.Root, "engine.log"); if (File.Exists(log)) Shell(log); else ShowToast("No engine log yet. That usually means nothing has gone wrong.", Banner.Tone.Info); };
         storage.Add(new SettingRow("Diagnostics", "Capture, audio and shortcut problems are written to engine.log.", logButton, 140));
+        var updateButton = new ZButton("Check for updates", ButtonKind.Secondary, Glyphs.Refresh) { AutoWidth = false, Width = Theme.S(190) };
+        updateButton.Click += async (_, _) => await CheckForUpdateAsync(quiet: false, install: false);
+        storage.Add(new SettingRow("Updates", $"You have version {Updates.Current.ToString(3)}. New versions come from GitHub releases.", updateButton, 190));
         var quit = new ZButton("Quit", ButtonKind.Danger, Glyphs.Power) { AutoWidth = false, Width = Theme.S(140) };
         quit.Click += async (_, _) => await Guard(async () => { await EngineClient.SendAsync(new("shutdown")); Close(); });
         storage.Add(new SettingRow("Quit ZenithClipper", "Stops background recording until you launch it again.", quit, 140));
@@ -749,7 +756,7 @@ public sealed class PanelForm : Form
 
     // ─────────────────────────── helpers ───────────────────────────
     Action? toastAction;
-    void ShowToast(string text, Banner.Tone tone, string? action = null, Action? onAction = null)
+    void ShowToast(string text, Banner.Tone tone, string? action = null, Action? onAction = null, bool sticky = false)
     {
         toastAction = onAction;
         if (settingsBuilt && settingsWidget.Visible)
@@ -758,8 +765,44 @@ public sealed class PanelForm : Form
             settingsToast.Height = settingsToast.MeasureHeight(Math.Max(Theme.S(200), settingsToast.Parent?.ClientSize.Width ?? Theme.S(600)));
         }
         else { toast.Show(text, tone, action); body.AutoScrollPosition = Point.Empty; }
-        toastTimer.Stop(); toastTimer.Interval = tone == Banner.Tone.Error ? 9000 : 5000; toastTimer.Start();
+        toastTimer.Stop(); if (sticky) return; toastTimer.Interval = tone == Banner.Tone.Error ? 9000 : 5000; toastTimer.Start();
     }
+    UpdateInfo? update; bool updating;
+    /// <summary>Asks GitHub for a newer release. Quiet checks only speak up when there is one.</summary>
+    async Task CheckForUpdateAsync(bool quiet, bool install)
+    {
+        if (updating) return;
+        if (!quiet) ShowToast("Checking for updates…", Banner.Tone.Info);
+        update = await Updates.CheckAsync();
+        if (IsDisposed) return;
+        if (update is null) { if (!quiet) ShowToast($"You're up to date (version {Updates.Current.ToString(3)}).", Banner.Tone.Success); return; }
+        if (install) { await InstallUpdateAsync(); return; }
+        ShowToast($"ZenithClipper {update.Version.ToString(3)} is available.", Banner.Tone.Info, Updates.CanSelfUpdate ? "Update now" : "Download", async () => await InstallUpdateAsync(), sticky: true);
+    }
+    /// <summary>Installed copies download the installer, verify it and run it (it closes and reopens the app).
+    /// Portable copies open the release page instead, since they can't replace themselves while running.</summary>
+    async Task InstallUpdateAsync()
+    {
+        if (update is null || updating) return;
+        if (!Updates.CanSelfUpdate || update.DownloadUrl is null) { Shell(update.PageUrl); return; }
+        updating = true;
+        try
+        {
+            int shown = -1;
+            var progress = new Progress<double>(f => { int pct = (int)(f * 100); if (pct != shown) { shown = pct; ShowToast($"Downloading ZenithClipper {update.Version.ToString(3)}… {pct}%", Banner.Tone.Info, sticky: true); } });
+            string setup = await Updates.DownloadAsync(update, progress);
+            ShowToast("Installing the update. ZenithClipper will reopen when it's done.", Banner.Tone.Info, sticky: true);
+            Process.Start(new ProcessStartInfo(setup) { UseShellExecute = true, ArgumentList = { "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/relaunch=1" } });
+            await Task.Delay(800);
+            Application.Exit();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or InvalidOperationException or TaskCanceledException or System.ComponentModel.Win32Exception)
+        {
+            ShowToast("Update failed: " + ex.Message, Banner.Tone.Error, "Open download page", () => Shell(update.PageUrl), sticky: true);
+        }
+        finally { updating = false; }
+    }
+
     async Task Guard(Func<Task> action)
     {
         if (busy) return; busy = true;
