@@ -14,6 +14,8 @@ sudo apt-get install -y -qq libmlt7 libmlt-data frei0r-plugins imagemagick file 
 
 mkdir -p "$appdir/usr/lib/zenithclipper" "$appdir/usr/bin" "$appdir/usr/lib/mlt-7" "$appdir/usr/share"
 cp -a "$published/app" "$published/editor" "$appdir/usr/lib/zenithclipper/"
+# .NET's optional LTTng tracing hook needs liblttng-ust, which linuxdeploy can't resolve; nothing uses it.
+find "$appdir/usr/lib/zenithclipper" -name libcoreclrtraceptprovider.so -delete
 
 # MLT modules the editor loads (no Qt, OpenCV, Movit, DeckLink, JACK or xine: those are denied at runtime anyway).
 mltlib=/usr/lib/x86_64-linux-gnu/mlt-7
