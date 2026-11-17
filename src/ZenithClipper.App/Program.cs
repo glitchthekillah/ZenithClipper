@@ -5,6 +5,7 @@ using System.Text.Json;
 try
 {
     string command = args.FirstOrDefault() ?? "panel";
+    if (OperatingSystem.IsLinux() && command is "daemon" or "panel") LinuxStartup.EnsureDefault();
     if(command=="daemon"&&!args.Contains("--legacy-daemon",StringComparer.Ordinal)&&DaemonLauncher.CanUseNative(AppPaths.Load(),AppContext.BaseDirectory))
     {
         Process.Start(DaemonLauncher.Create(AppContext.BaseDirectory,Environment.ProcessPath!,true));return 0;

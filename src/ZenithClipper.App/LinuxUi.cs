@@ -24,7 +24,7 @@ static class LinuxUi
         while (true)
         {
             var response = await Control.SendAsync(new("status")); var status = response.Status;
-            var choice = await Dialog("--list", "--title=ZenithClipper controls", $"--text={status?.State} — {status?.BufferedSeconds:F1}s buffered\n{status?.Error}", "--column=Action", "Save clip", "Pause capture", "Resume capture", "Settings", "Keyboard shortcuts", "Check for updates", "Open editor", "Open clips", "Quit engine", "--height=420", "--width=600");
+            var choice = await Dialog("--list", "--title=ZenithClipper controls", $"--text={status?.State} — {status?.BufferedSeconds:F1}s buffered\n{status?.Error}", "--column=Action", "Save clip", "Pause capture", "Resume capture", "Settings", "Startup", "Keyboard shortcuts", "Check for updates", "Open editor", "Open clips", "Quit engine", "--height=420", "--width=600");
             if (choice == null) return;
             try
             {
@@ -34,6 +34,7 @@ static class LinuxUi
                     case "Pause capture": Check(await Control.SendAsync(new("pause"))); break;
                     case "Resume capture": Check(await Control.SendAsync(new("resume"))); break;
                     case "Settings": await ConfigureAsync(); break;
+                    case "Startup": await ConfigureStartupAsync(); break;
                     case "Keyboard shortcuts": await ConfigureShortcutsAsync(); break;
                     case "Check for updates": await UpdateAsync(); break;
                     case "Open editor": LaunchEditor(); break;
@@ -45,6 +46,17 @@ static class LinuxUi
         }
     }
     static void Check(ControlResponse response) { if (!response.Ok) throw new IOException(response.Error); }
+    static async Task ConfigureStartupAsync()
+    {
+        var response = await Control.SendAsync(new("settings")); Check(response); var settings = response.Settings!;
+        const string login = "Start ZenithClipper when I log in", record = "Start recording as soon as it starts";
+        var picked = await Dialog("--list", "--checklist", "--title=Startup", "--text=Choose what happens when you turn on your PC.", "--column=On", "--column=Option",
+            LinuxStartup.Enabled ? "TRUE" : "FALSE", login, settings.AutoStartCapture ? "TRUE" : "FALSE", record, "--separator=|", "--width=520", "--height=260");
+        if (picked == null) return;
+        var on = picked.Split('|');
+        LinuxStartup.Set(on.Contains(login));
+        if (on.Contains(record) != settings.AutoStartCapture) Check(await Control.SendAsync(new("configure", Settings: settings with { AutoStartCapture = on.Contains(record) })));
+    }
     static void LaunchEditor()
     {
         var info = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false };
@@ -123,4 +135,37 @@ static class LinuxUi
         try { using var _ = Process.Start(new ProcessStartInfo("notify-send") { ArgumentList = { "--app-name=ZenithClipper", $"ZenithClipper {update.Version.ToString(3)} is available", "Open the ZenithClipper controls and choose Check for updates." } }); }
         catch (System.ComponentModel.Win32Exception) { }
     });
+}
+
+/// <summary>Start at login through an XDG autostart entry. The file is the setting; the first run turns it on once.</summary>
+static class LinuxStartup
+{
+    static string Entry => Path.Combine(Environment.GetEnvironmentVariable("XDG_CONFIG_HOME") is { Length: > 0 } x ? x : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config"), "autostart", "zenithclipper.desktop");
+    static string Marker => Path.Combine(AppPaths.Root, "startup-default-applied");
+    public static bool Enabled => File.Exists(Entry);
+
+    static string? Launcher()
+    {
+        if (Environment.GetEnvironmentVariable("APPIMAGE") is { Length: > 0 } image) return image;
+        string? self = Environment.ProcessPath;
+        return self == null || Path.GetFileNameWithoutExtension(self) == "dotnet" ? null : self;
+    }
+
+    public static void Set(bool on)
+    {
+        if (!on) { File.Delete(Entry); return; }
+        string launcher = Launcher() ?? throw new IOException("Start at login needs the installed app, not a development build.");
+        Directory.CreateDirectory(Path.GetDirectoryName(Entry)!);
+        File.WriteAllText(Entry, "[Desktop Entry]\nType=Application\nName=ZenithClipper\nComment=Instant replay recorder\nExec=\"" + launcher.Replace("\"", "\\\"") + "\" daemon\nTerminal=false\nX-GNOME-Autostart-enabled=true\n");
+    }
+
+    public static void EnsureDefault()
+    {
+        try
+        {
+            if (!File.Exists(Marker)) { if (Launcher() != null) Set(true); Directory.CreateDirectory(AppPaths.Root); File.WriteAllText(Marker, "1"); }
+            else if (Enabled && Launcher() != null) Set(true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+    }
 }

@@ -17,7 +17,7 @@ static class Program
         if (PanelStartupProbe.Enabled) { PanelStartupProbe.Run(); return; }
         try
         {
-            if (args.FirstOrDefault() == "--background") { EngineClient.StartEngine(); UpdateNotifier.Run(force: false); return; }
+            if (args.FirstOrDefault() == "--background") { Startup.EnsureDefault(); EngineClient.StartEngine(); UpdateNotifier.Run(force: false); return; }
             if (args.FirstOrDefault() == "--update-check") { UpdateNotifier.Run(force: args.Contains("--now")); return; }
             if (args.FirstOrDefault() == "update") { PanelForm.UpdateOnOpen = true; args = ["panel"]; }
             if (args.FirstOrDefault() == "--snapshot" && args.Length > 1) { Directory.CreateDirectory(args[1]); PanelForm.SnapshotDir = args[1]; Application.Run(new PanelForm()); return; }
@@ -33,6 +33,7 @@ static class Program
                 ShowWindowAsync(window, 9); SetForegroundWindow(window);
                 return;
             }
+            if (!editor) Startup.EnsureDefault();
             Application.Run(editor ? new EditorForm(args.Skip(1).FirstOrDefault()) : new PanelForm());
         }
         catch (Exception ex) { MessageBox.Show(ex.Message, "ZenithClipper", MessageBoxButtons.OK, MessageBoxIcon.Error); }

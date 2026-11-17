@@ -54,7 +54,7 @@ public sealed class PanelForm : Form
     ZChips history = null!, disk = null!, defaultLength = null!;
     ZChips resolution = null!, frameRate = null!, encoder = null!, monitor = null!, backend = null!;
     ZSlider quality = null!;
-    ZToggle captureAudio = null!, reduceMotion = null!;
+    ZToggle captureAudio = null!, reduceMotion = null!, startWithWindows = null!, recordOnStart = null!;
     AccentSwatches accentPicker = null!;
     ZChips tone = null!;
     ZField excludedField = null!;
@@ -176,7 +176,7 @@ public sealed class PanelForm : Form
         history = new() { Segmented = true }; disk = new() { Segmented = true }; defaultLength = new() { Segmented = true };
         resolution = new() { Segmented = true }; frameRate = new() { Segmented = true }; encoder = new() { Segmented = true }; monitor = new() { Segmented = true }; backend = new() { Segmented = true };
         quality = new(10, 40, 20);
-        captureAudio = new(); reduceMotion = new(); accentPicker = new(); tone = new() { Segmented = true };
+        captureAudio = new(); reduceMotion = new(); startWithWindows = new(); recordOnStart = new(); accentPicker = new(); tone = new() { Segmented = true };
         excludedField = new("Spotify, Discord");
         clipKey = new(); panelKey = new();
         applyText = new("", Theme.Small, Theme.Muted);
@@ -462,9 +462,18 @@ public sealed class PanelForm : Form
         replayCard.Add(new SettingRow("Disk limit", "History stops growing past this size, even if the time above is longer.", disk, 380));
         foreach (int s in ClipPresets) defaultLength.Add(Theme.Span(s), s);
         replayCard.Add(new SettingRow("Save shortcut length", "How much the save shortcut keeps.", defaultLength, 380));
+        replayCard.Add(new SettingRow("Start with Windows", "Runs quietly in the background when you sign in. Open this panel from the shortcut or the Start menu.", startWithWindows, 44));
+        replayCard.Add(new SettingRow("Record on startup", "Starts recording as soon as ZenithClipper starts. Turn off to start it yourself with the Record switch.", recordOnStart, 44));
         history.SelectionChanged += (_, _) => { if (!loadingSettings && history.SelectedValue is -1) PickCustomHistory(); Changed(); };
         disk.SelectionChanged += (_, _) => Changed();
         defaultLength.SelectionChanged += (_, _) => Changed();
+        recordOnStart.CheckedChanged += (_, _) => Changed();
+        startWithWindows.CheckedChanged += (_, _) =>
+        {
+            if (loadingSettings) return;
+            try { Startup.Set(startWithWindows.Checked); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { ShowToast("Could not change startup: " + ex.Message, Banner.Tone.Error); startWithWindows.SetSilently(Startup.Enabled); }
+        };
 
         var videoCard = view.Add(new AutoCard("Video", Glyphs.Video) { Subtitle = "Picture quality, the display that's recorded and the encoder" });
         resolution.Add("Native", 0).Add("1440p", 2560).Add("1080p", 1920).Add("720p", 1280);
@@ -555,6 +564,7 @@ public sealed class PanelForm : Form
             Monitor = monitor.SelectedValue is int m ? m : s.Monitor,
             WindowsCaptureBackend = backend.SelectedValue as string ?? s.WindowsCaptureBackend,
             CaptureAudio = captureAudio.Checked,
+            AutoStartCapture = recordOnStart.Checked,
             ExcludedApps = excludedField.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(x => x.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? x[..^4] : x).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
             ClipDirectory = clipFolder.Length > 0 ? clipFolder : s.ClipDirectory,
             ClipHotkey = clipKey.Value, PanelHotkey = panelKey.Value,
@@ -573,7 +583,7 @@ public sealed class PanelForm : Form
             if (!frameRate.Select(s.Fps)) { frameRate.Add($"{s.Fps}", s.Fps); frameRate.Select(s.Fps); }
             quality.Value = Math.Clamp(s.Quality, 10, 40);
             encoder.Select(s.Encoder); monitor.Select(Math.Min(s.Monitor, Math.Max(0, Screen.AllScreens.Length - 1))); backend.Select(s.WindowsCaptureBackend);
-            captureAudio.SetSilently(s.CaptureAudio); excludedField.Text = string.Join(", ", s.ExcludedApps);
+            captureAudio.SetSilently(s.CaptureAudio); recordOnStart.SetSilently(s.AutoStartCapture); startWithWindows.SetSilently(Startup.Enabled); excludedField.Text = string.Join(", ", s.ExcludedApps);
             clipKey.Value = s.ClipHotkey; panelKey.Value = s.PanelHotkey; clipFolder = s.ClipDirectory;
             folderRow.Detail = s.ClipDirectory;
             var primary = Screen.AllScreens.ElementAtOrDefault(s.Monitor) ?? Screen.PrimaryScreen;

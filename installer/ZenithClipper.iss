@@ -39,7 +39,6 @@ RestartApplications=no
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Shortcuts:"
-Name: "startup"; Description: "Start the recorder when I sign in"; GroupDescription: "Startup:"
 
 [Files]
 ; portable.flag would keep data beside the app; installed copies use %LOCALAPPDATA% instead.
@@ -54,7 +53,8 @@ Name: "{autoprograms}\ZenithClipper Editor"; Filename: "{app}\windows\ZenithClip
 Name: "{autodesktop}\ZenithClipper"; Filename: "{app}\windows\ZenithClipper.Windows.exe"; Parameters: "panel"; WorkingDir: "{app}\windows"; Tasks: desktopicon
 
 [Registry]
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "ZenithClipper"; ValueData: """{app}\windows\ZenithClipper.Windows.exe"" --background"; Tasks: startup; Flags: uninsdeletevalue
+; Start-with-Windows is owned by the app (Settings > Replay). Uninstall still removes it.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "ZenithClipper"; Flags: dontcreatekey uninsdeletevalue
 
 [Run]
 Filename: "{app}\windows\ZenithClipper.Windows.exe"; Parameters: "panel"; WorkingDir: "{app}\windows"; Description: "Open ZenithClipper"; Flags: nowait postinstall skipifsilent
