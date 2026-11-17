@@ -44,7 +44,7 @@ function panelHTML(id) {
     <div class="zp-strip-l"><span>−1:00:00</span><span>Now</span></div>
     <div class="zp-durs" data-durs><div class="pill"></div><span class="on">15s</span><span>30s</span><span>1m</span><span>2m</span><span>5m</span><span>Custom</span></div>
     <div class="zp-save" data-save><span data-savet>Save last 15s</span><kbd>Alt+C</kbd></div>
-    <div class="zp-tiles"><div><small>SAVED TODAY</small><b data-saved>0</b><span data-saveds>No clips yet</span></div><div><small>RECORDER CPU</small><b data-cpu>1.4%</b><span>of all cores</span></div><div><small>MEMORY</small><b>89 MB</b><span>engine + encoder</span></div></div>
+    <div class="zp-tiles"><div><small>SAVED TODAY</small><b data-saved>0</b><span data-saveds>No clips yet</span></div><div><small>RECORDER CPU</small><b data-cpu>1.4%</b><span>of all cores</span></div><div><small>MEMORY</small><b>89 MB</b><span>recorder only</span></div></div>
   </div>
   <div class="zp-audio">
     <div class="zp-row"><b>Clip audio</b><span>Only changes what clips hear</span></div>

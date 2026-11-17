@@ -2,7 +2,7 @@
 
 **Instant replay with a real editor, for Windows and Linux.** ZenithClipper keeps the last minutes of your screen in a rolling buffer on disk and saves a clip when you press Alt+C, then lets you cut it in a built-in multitrack editor. A lightweight alternative to ShadowPlay, Medal and the OBS replay buffer: about 89 MB of RAM while recording, hardware encoding on NVIDIA, AMD and Intel.
 
-**Website:** https://zenithclipper.glitchthekillah.com/ · **Download:** [latest release](https://github.com/glitchthekillah/ZenithClipper/releases/latest)
+**Website:** https://zenithclipper.glitchthekillah.com/ · **Download:** [latest release](https://github.com/glitchthekillah/ZenithClipper/releases/latest) · **Help:** [support Discord](https://discord.gg/4ju5pj5HDW)
 
 The recorder runs as a small background engine with an on-demand control panel and a separate on-demand clip editor. See `docs/VERIFICATION.md` for test evidence and limits.
 

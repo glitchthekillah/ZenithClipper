@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using ZenithClipper.Windows.Media;
 using ZenithClipper.Windows.Ui;
@@ -515,6 +516,9 @@ public sealed class PanelForm : Form
         var updateButton = new ZButton("Check for updates", ButtonKind.Secondary, Glyphs.Refresh) { AutoWidth = false, Width = Theme.S(190) };
         updateButton.Click += async (_, _) => await CheckForUpdateAsync(quiet: false, install: false);
         storage.Add(new SettingRow("Updates", $"You have version {Updates.Current.ToString(3)}. New versions come from GitHub releases.", updateButton, 190));
+        var helpButton = new ZButton("Join the Discord") { AutoWidth = false, Width = Theme.S(190) };
+        helpButton.Click += (_, _) => Shell(HelpUrl);
+        storage.Add(new SettingRow("Help", "Questions, bugs or ideas? Ask in the support Discord.", helpButton, 190));
         var quit = new ZButton("Quit", ButtonKind.Danger, Glyphs.Power) { AutoWidth = false, Width = Theme.S(140) };
         quit.Click += async (_, _) => await Guard(async () => { await EngineClient.SendAsync(new("shutdown")); Close(); });
         storage.Add(new SettingRow("Quit ZenithClipper", "Stops background recording until you launch it again.", quit, 140));
@@ -844,6 +848,7 @@ public sealed class PanelForm : Form
         if (folder.Length == 0) return;
         try { Directory.CreateDirectory(folder); Shell(folder); } catch (IOException ex) { ShowToast(ex.Message, Banner.Tone.Error); }
     }
+    const string HelpUrl = "https://discord.gg/4ju5pj5HDW";
     static void Shell(string path) => Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
 
     sealed class ApplyBar : Panel
@@ -1025,7 +1030,7 @@ sealed class SettingsNav : Control
     }
 }
 
-/// <summary>What the recorder itself costs: engine + FFmpeg CPU and memory. Sampled only while the panel is open.</summary>
+/// <summary>What the recorder itself costs: the engine process plus any FFmpeg it started. The panel and editor are not counted. Sampled only while the panel is open.</summary>
 sealed class PerfSampler
 {
     TimeSpan lastCpu; DateTime lastAt; float cpu; long memory; string encoder = "…";
@@ -1039,7 +1044,8 @@ sealed class PerfSampler
         try { procs.Add(Process.GetProcessById(status.ProcessId)); } catch (ArgumentException) { }
         foreach (var p in Process.GetProcessesByName("ffmpeg"))
         {
-            try { if (p.MainModule?.FileName.StartsWith(AppContext.BaseDirectory, StringComparison.OrdinalIgnoreCase) == true) { procs.Add(p); continue; } }
+            // Only FFmpeg started by the recorder counts; the editor's preview and thumbnail decoders are UI, not recording.
+            try { if (status.ProcessId > 0 && ParentId(p) == status.ProcessId) { procs.Add(p); continue; } }
             catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { }
             p.Dispose();
         }
@@ -1049,6 +1055,15 @@ sealed class PerfSampler
         if (lastAt != default && total >= lastCpu) cpu = (float)((total - lastCpu).TotalMilliseconds / Math.Max(1, (now - lastAt).TotalMilliseconds) / Environment.ProcessorCount * 100);
         lastCpu = total; lastAt = now; memory = mem;
     }
+
+    static int ParentId(Process process)
+    {
+        var info = new BasicInfo();
+        return NtQueryInformationProcess(process.Handle, 0, ref info, Marshal.SizeOf<BasicInfo>(), out _) == 0 ? (int)info.Parent : -1;
+    }
+
+    [StructLayout(LayoutKind.Sequential)] struct BasicInfo { public nint ExitStatus, Peb, Affinity, Priority, Id, Parent; }
+    [DllImport("ntdll.dll")] static extern int NtQueryInformationProcess(nint process, int infoClass, ref BasicInfo info, int size, out int returned);
 }
 
 /// <summary>Replay buffer as a timeline: the whole history, with the part a save keeps highlighted, then time and disk used.</summary>

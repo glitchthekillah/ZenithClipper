@@ -86,6 +86,6 @@ sealed class StatTiles : Control, IMeasured
             var pts = history.Select((v, k) => new PointF(box.X + Theme.S(10) + (30 - history.Count + k) * sx, baseY - v / max * Theme.S(30))).ToArray();
             using var pen = new Pen(Theme.Alpha(Theme.Accent, 110), Theme.S(1.5f)); g.DrawLines(pen, pts);
         });
-        Tile(2, "MEMORY", Theme.Bytes(memory), "engine + encoder");
+        Tile(2, "MEMORY", Theme.Bytes(memory), "recorder only");
     }
 }

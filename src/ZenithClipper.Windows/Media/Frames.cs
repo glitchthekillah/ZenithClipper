@@ -60,7 +60,7 @@ static class Frames
         return !cover&&videoDuration>0&&videoDuration<=duration&&duration-videoDuration<=.1+1e-9?videoDuration:duration;
     }
 
-    /// <summary>One frame at <paramref name="seconds"/>, scaled to exactly width × height.</summary>
+    /// <summary>One frame at <paramref name="seconds"/>, decoded on the GPU when FFmpeg supports it, scaled to exactly width × height.</summary>
     public static async Task<Bitmap?> GrabAsync(Settings settings, string path, double seconds, int width, int height, CancellationToken ct = default)
     {
         width = Math.Max(2, width & ~1); height = Math.Max(2, height & ~1);
@@ -68,7 +68,7 @@ static class Frames
         try
         {
             var info = new ProcessStartInfo(Ffmpeg(settings)) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
-            foreach (string arg in new[] { "-nostdin", "-hide_banner", "-loglevel", "error", "-threads", "1", "-filter_threads", "1", "-filter_complex_threads", "1", "-ss", Inv(Math.Max(0, seconds)), "-i", path, "-frames:v", "1", "-an",
+            foreach (string arg in new[] { "-nostdin", "-hide_banner", "-loglevel", "error", "-hwaccel", "auto", "-threads", "1", "-filter_threads", "1", "-filter_complex_threads", "1", "-ss", Inv(Math.Max(0, seconds)), "-i", path, "-frames:v", "1", "-an",
                 "-vf", $"scale={width}:{height}:flags=bilinear,format=bgra", "-f", "rawvideo", "pipe:1" }) info.ArgumentList.Add(arg);
             using var process = Process.Start(info) ?? throw new IOException("Could not start FFmpeg.");
             MediaTools.LowerPriority(process);
@@ -187,7 +187,7 @@ sealed class PreviewPlayer : IDisposable
         Stop();
         width = Math.Max(2, width & ~1); height = Math.Max(2, height & ~1); fps = Math.Clamp(fps, 10, 30);
         var info = new ProcessStartInfo(MediaTools.FindFfmpeg(settings)) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
-        foreach (string arg in new[] { "-nostdin", "-hide_banner", "-loglevel", "error", "-threads", "1", "-filter_threads", "1", "-filter_complex_threads", "1", "-re", "-ss", from.ToString("0.###", CultureInfo.InvariantCulture), "-i", path,
+        foreach (string arg in new[] { "-nostdin", "-hide_banner", "-loglevel", "error", "-hwaccel", "auto", "-threads", "1", "-filter_threads", "1", "-filter_complex_threads", "1", "-re", "-ss", from.ToString("0.###", CultureInfo.InvariantCulture), "-i", path,
             "-t", Math.Max(0.05, until - from).ToString("0.###", CultureInfo.InvariantCulture), "-an",
             "-vf", $"fps={fps.ToString("0.###", CultureInfo.InvariantCulture)},scale={width}:{height}:flags=bilinear,format=bgra", "-f", "rawvideo", "pipe:1" }) info.ArgumentList.Add(arg);
         var p = Process.Start(info) ?? throw new IOException("Could not start FFmpeg.");
