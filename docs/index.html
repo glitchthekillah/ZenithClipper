@@ -15,7 +15,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3CradialGradient id='g' cx='.34' cy='.28' r='.8'%3E%3Cstop offset='0' stop-color='%23FFD9CB'/%3E%3Cstop offset='.32' stop-color='%23FF8A5C'/%3E%3Cstop offset='.7' stop-color='%23E5432A'/%3E%3Cstop offset='1' stop-color='%235A1D14'/%3E%3C/radialGradient%3E%3Ccircle cx='32' cy='32' r='28' fill='url(%23g)'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@500&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="ui.css?v=1117f">
+<link rel="stylesheet" href="ui.css?v=1117g">
 <style>
 :root{--acc:#FF6B4A;--bg:#08090c;--ink:#f1f1f3;--muted:#8f929b;--dim:#5b5e66;--line:#1b1c21;--disp:'Bricolage Grotesque',Inter,system-ui,sans-serif;--sans:Inter,system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;--hand:Caveat,'Comic Sans MS',cursive;--pad:clamp(20px,4.5vw,72px);--ease:cubic-bezier(.19,1,.22,1);color-scheme:dark}
 *{box-sizing:border-box}
@@ -159,6 +159,10 @@ a{color:inherit;text-decoration:none}
 .gg .g:nth-child(1){grid-column:span 7;grid-row:span 2;aspect-ratio:auto}
 .gg .g:nth-child(2),.gg .g:nth-child(3){grid-column:span 5}
 .gg .g:nth-child(n+4){grid-column:span 4}
+.lg{display:inline-block;width:.95em;height:.95em;vertical-align:-.12em;margin-right:.42em;fill:currentColor;flex:none}
+.lg-m{display:inline-grid;place-items:center;width:1.6em;height:1.6em;border-radius:.36em;background:#f5c518;color:#111;font:800 .6em/1 var(--sans);vertical-align:.12em;margin-right:.7em}
+#jump{position:fixed;inset:0;z-index:95;background:#08090c;opacity:0;pointer-events:none}
+.nav .pf{color:var(--dim)}.nav .pf:hover{color:var(--ink)}
 .hw{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:12px}
 .hw div{padding:22px;border-radius:14px;background:#111216;border:1px solid #1f2026}
 .hw b{display:block;font:700 22px var(--disp);letter-spacing:-.02em}
@@ -169,7 +173,7 @@ a{color:inherit;text-decoration:none}
 #proof{padding:16vh var(--pad) 10vh;max-width:1360px;margin:0 auto}
 #proof h2{font-size:clamp(46px,7vw,124px)}
 .big-mb{display:flex;align-items:baseline;gap:18px;margin:8vh 0 4vh}
-.big-mb b{font:800 clamp(120px,20vw,320px)/.9 var(--disp);letter-spacing:-.05em;padding:0 .12em .06em .02em;margin:0 -.12em -.06em -.02em;background:linear-gradient(#fff,#ffb8a6);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+.big-mb b{font:800 clamp(120px,20vw,320px)/.9 var(--disp);letter-spacing:-.05em;color:#ffd9cb;font-variant-numeric:tabular-nums}
 .big-mb span{color:var(--muted);max-width:16em}
 .bars{display:grid;gap:12px}
 .bar{display:grid;grid-template-columns:200px 1fr 130px;gap:18px;align-items:center}
@@ -216,7 +220,7 @@ footer a{color:var(--muted)}
 
 <header class="nav">
   <a class="brand" href="#hero"><span class="orb-css"></span>ZenithClipper</a>
-  <nav class="links" aria-label="Sections"><a href="#replay">Instant replay</a><a href="#editor">Editor</a><a href="#proof">Compare</a></nav>
+  <nav class="links" aria-label="Sections"><a href="#replay">Instant replay</a><a href="#editor">Editor</a><a href="#proof">Compare</a><a class="pf" href="https://glitchthekillah.com" rel="author">Portfolio ↗</a></nav>
   <a class="cta" href="#get">Download</a>
 </header>
 
@@ -329,11 +333,12 @@ footer a{color:var(--muted)}
   </div>
 </section>
 </main>
-<footer><span>ZenithClipper · made by <a href="https://glitchthekillah.com">glitch</a></span><span>Gameplay recorded by the developer.</span></footer>
+<div id="jump" aria-hidden="true"></div>
+<footer><span>ZenithClipper · made by <a href="https://glitchthekillah.com" rel="author">glitch</a> · <a href="https://glitchthekillah.com">see my other projects →</a></span><span>Gameplay recorded by the developer.</span></footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
-<script src="app.js?v=1117f"></script>
+<script src="app.js?v=1117g"></script>
 </body>
 </html>
