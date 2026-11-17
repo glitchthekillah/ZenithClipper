@@ -196,7 +196,8 @@ if (window.Lenis && !reduce) {
   $$('a[href^="#"]').forEach((a) => a.addEventListener('click', (e) => { const el = $(a.getAttribute('href')); if (el) { e.preventDefault(); lenis.scrollTo(el); } }));
 }
 const scene = (sel, fn) => ScrollTrigger.create({ trigger: sel, start: 'top top', end: 'bottom bottom', onUpdate: (s) => fn(s.progress), onRefresh: (s) => fn(s.progress) });
-const playIn = (sel) => ScrollTrigger.create({ trigger: sel, start: 'top bottom', end: 'bottom top', onToggle: (s) => $$('video', $(sel)).forEach((v) => { if (s.isActive) { v.preload = 'auto'; v.play().catch(() => {}); } else v.pause(); }) });
+const vio = new IntersectionObserver((es) => es.forEach((e) => { const v = e.target; if (e.isIntersecting) { v.preload = 'auto'; v.play().catch(() => {}); } else v.pause(); }), { rootMargin: '-8% 0px' });
+const playIn = (sel) => $$('video', $(sel)).forEach((v) => vio.observe(v));
 
 // Hero: the giant words part, the panel lifts flat
 gsap.timeline({ scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 1 } })
