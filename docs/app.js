@@ -38,7 +38,7 @@ function panelHTML(id) {
   <div class="zp-b">
     <div class="zp-toast" data-toast>${I('check')}<span>Saved 2m clip  ·  Clip-2026-11-17-21-42-08-3f9a1c.mp4</span><em>Edit</em></div>
     <div class="zp-row"><b>Instant replay</b><span class="zp-tog">Record<i></i></span></div>
-    <div class="zp-big"><div><div class="zp-rec"><i></i>RECORDING</div><div class="zp-time" data-clock>21:11</div><div class="zp-sub">buffered of 1:00:00 history</div></div><div class="zp-ring" data-ring><div><b data-mb>611 MB</b><span>of 2.0 GB</span></div></div></div>
+    <div class="zp-big"><div><div class="zp-rec"><i></i>RECORDING</div><div class="zp-time" data-clock>21:11</div><div class="zp-sub">saved · keeps the last 1 hour</div></div><div class="zp-ring" data-ring><div><b data-mb>611 MB</b><span>of 2.0 GB</span></div></div></div>
     <div class="zp-chips"><span>NVENC NATIVE</span><span>2560×1600</span><span>Display fps</span><span>Audio on</span></div>
     <div class="zp-strip" data-strip><div class="segs">${'<i></i>'.repeat(6)}</div><div class="pick"></div><div class="now"></div></div>
     <div class="zp-strip-l"><span>−1:00:00</span><span>Now</span></div>
