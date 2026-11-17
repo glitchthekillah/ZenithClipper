@@ -31,8 +31,8 @@
 @keyframes zpblink{50%{opacity:.25}}
 .zp-time{font:700 32px/1.1 'Segoe UI Variable Display','Segoe UI',Inter,sans-serif;letter-spacing:-.5px;font-variant-numeric:tabular-nums;margin-top:2px}
 .zp-sub{color:var(--muted);font-size:12px}
-.zp-ring{width:72px;height:72px;border-radius:50%;display:grid;place-content:center;text-align:center;background:radial-gradient(var(--bg) 63%,transparent 64%),conic-gradient(var(--acc) 0 var(--fill,30%),#232529 0)}
-.zp-ring b{font:700 12px 'Segoe UI',Inter,sans-serif}.zp-ring span{font-size:10px;color:var(--faint)}
+.zp-ring{width:84px;height:84px;border-radius:50%;display:grid;place-content:center;text-align:center;background:radial-gradient(var(--bg) 66%,transparent 67%),conic-gradient(var(--acc) 0 var(--fill,30%),#232529 0)}
+.zp-ring b{display:block;font:700 12px 'Segoe UI',Inter,sans-serif;white-space:nowrap}.zp-ring span{display:block;font-size:10px;color:var(--faint);white-space:nowrap}
 .zp-chips{display:flex;gap:6px;margin-top:12px}
 .zp-chips span{padding:4px 9px;border-radius:99px;background:var(--raised);border:1px solid var(--line);color:var(--soft);font-size:11px}
 .zp-strip{position:relative;height:36px;margin-top:14px;border-radius:6px;background:var(--surface);border:1px solid var(--line);overflow:hidden}

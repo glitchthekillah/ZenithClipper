@@ -110,12 +110,12 @@ $('#ed-fit').innerHTML = `<div class="zc ze" id="ze">
 
 /* ---------- Export dialog, rebuilt from the real dialog ---------- */
 $('#ex-dlg').innerHTML = `<div class="zc zx"><h4>Export</h4>
-  <div class="r">Preset<div><span id="ex-preset">General · Match sequence · H.264 high quality</span>${I('down')}</div></div>
+  <div class="r">Preset<div><span id="ex-preset">Match sequence · H.264 high quality</span>${I('down')}</div></div>
   <div class="r">Range<div>Entire sequence${I('down')}</div></div><div class="r">Captions<div>Burn into video${I('down')}</div></div>
   <div class="r">Audio bitrate<div>Preset default${I('down')}</div></div><div class="r">Sample rate<div>48 kHz${I('down')}</div></div>
   <p id="ex-desc">Same size as the sequence. Visually lossless for most footage.<br>1280×720 · 00:00:10.000 long</p>
   <div class="b"><span>Cancel</span><span>Add to queue</span><span>Export…</span></div></div>`;
-const presets = [['General · Match sequence · H.264 high quality', 'Same size as the sequence. Visually lossless for most footage.'], ['Discord · Discord · 10 MB', 'Fits Discord\'s free upload limit.'], ['Social · YouTube 4K · H.265', 'Upscaled for YouTube\'s best quality tier.'], ['Formats · Animated GIF · 480p', 'For the group chat.'], ['Archive · Smallest file · AV1', 'Tiny files, great quality.'], ['Audio · Audio only · FLAC', 'Just the sound, lossless.']];
+const presets = [['Match sequence · H.264 high quality', 'Same size as the sequence. Visually lossless for most footage.'], ['Discord · 10 MB', 'Fits Discord\'s free upload limit.'], ['YouTube 4K · H.265', 'Upscaled for YouTube\'s best quality tier.'], ['Animated GIF · 480p', 'For the group chat.'], ['Smallest file · AV1', 'Tiny files, great quality.'], ['Audio only · FLAC', 'Just the sound, lossless.']];
 let pi = 0; setInterval(() => { if (reduce) return; pi = (pi + 1) % presets.length; $('#ex-preset').textContent = presets[pi][0]; $('#ex-desc').innerHTML = presets[pi][1] + '<br>1280×720 · 00:00:10.000 long'; }, 1800);
 const fmts = ['MP4', 'H.265', 'AV1', 'MOV', 'MKV', 'WebM', 'GIF', 'ProRes', 'MP3', 'WAV', 'M4A', 'FLAC', 'NVENC', 'Discord', 'YouTube 4K'];
 $('#mq-a').innerHTML = [...fmts, ...fmts].map((f) => `<span>${f}</span>`).join('');
@@ -183,7 +183,7 @@ function start() {
   if (!window.gsap) return;
   gsap.from('#g-back .ch', { yPercent: 110, opacity: 0, duration: 1.4, stagger: .06, ease: 'expo.out', delay: .4 });
   gsap.from('#g-front .ch', { yPercent: -60, opacity: 0, duration: 1.4, stagger: .06, ease: 'expo.out', delay: .6 });
-  gsap.from('#hero-panel', { y: 140, rotateX: 40, opacity: 0, duration: 1.8, ease: 'expo.out', delay: .5 });
+  gsap.from('#hero-panel', { y: 120, opacity: 0, duration: 1.6, ease: 'expo.out', delay: .5 });
   gsap.from('.hero-tag', { y: 20, opacity: 0, duration: 1.2, ease: 'expo.out', delay: 1 });
 }
 
@@ -202,7 +202,7 @@ const playIn = (sel) => ScrollTrigger.create({ trigger: sel, start: 'top bottom'
 gsap.timeline({ scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 1 } })
   .to('#g-back', { yPercent: -60, xPercent: -18, opacity: 0, ease: 'none' }, 0)
   .to('#g-front', { yPercent: 70, xPercent: 18, opacity: 0, ease: 'none' }, 0)
-  .to('#hero-panel', { rotateX: 0, rotateY: -6, rotateZ: 0, ease: 'none' }, 0)
+  .to('#hero-panel', { rotate: 0, ease: 'none' }, 0)
   .to('#hero-stage', innerWidth < 820 ? { opacity: 0, yPercent: -80, ease: 'none', duration: .3 } : { left: '72%', ease: 'none' }, 0)
   .to('.hero-tag', { opacity: 0, ease: 'none', duration: .2 }, 0)
   .fromTo('#hero-copy', { opacity: 0, y: 40 }, { opacity: 1, y: 0, ease: 'none', duration: .35 }, .3)
@@ -308,9 +308,9 @@ scene('#editor', (p) => {
 ScrollTrigger.create({ trigger: '#editor', start: 'top bottom', end: 'bottom top', onToggle: (s) => { [monH, monF, ...$$('.ze-card video')].forEach((v) => { if (s.isActive) { v.preload = 'auto'; v.play().catch(() => {}); } else v.pause(); }); } });
 
 // Export marquee, reveals, proof
-gsap.to('#mq-a', { xPercent: -50, ease: 'none', scrollTrigger: { trigger: '#export', start: 'top bottom', end: 'bottom top', scrub: 1 } });
-gsap.fromTo('#mq-b', { xPercent: -50 }, { xPercent: 0, ease: 'none', scrollTrigger: { trigger: '#export', start: 'top bottom', end: 'bottom top', scrub: 1 } });
-gsap.from('#ex-dlg', { y: 100, rotateX: 20, opacity: 0, duration: 1.4, ease: 'expo.out', scrollTrigger: { trigger: '#export', start: 'top 60%', toggleActions: 'play none none reverse' } });
+gsap.to('#mq-a', { xPercent: -50, ease: 'none', scrollTrigger: { trigger: '#export', start: 'top bottom', end: 'bottom top', scrub: true } });
+gsap.fromTo('#mq-b', { xPercent: -50 }, { xPercent: 0, ease: 'none', scrollTrigger: { trigger: '#export', start: 'top bottom', end: 'bottom top', scrub: true } });
+gsap.from('#ex-dlg', { y: 100, opacity: 0, duration: 1.4, ease: 'expo.out', scrollTrigger: { trigger: '#export', start: 'top 60%', toggleActions: 'play none none reverse' } });
 $$('#export .split, #games .split, #proof .split, #get .split').forEach((h) => gsap.from($$('.w > span', h), { yPercent: 110, duration: 1.2, stagger: .05, ease: 'expo.out', scrollTrigger: { trigger: h, start: 'top 85%', toggleActions: 'play none none reverse' } }));
 ScrollTrigger.batch('#gg .g', { start: 'top 92%', onEnter: (b) => gsap.from(b, { y: 60, opacity: 0, scale: .96, stagger: .07, duration: 1.1, ease: 'expo.out' }) });
 ScrollTrigger.create({ trigger: '.big-mb', start: 'top 80%', once: true, onEnter: () => gsap.to({ v: 0 }, { v: 89, duration: 2, ease: 'expo.out', onUpdate() { $('#mb').textContent = Math.round(this.targets()[0].v); } }) });
