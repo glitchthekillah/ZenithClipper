@@ -183,6 +183,14 @@ static class Theme
         string main = t.TotalHours >= 1 ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}" : $"{t.Minutes}:{t.Seconds:00}";
         return fraction ? main + "." + (t.Milliseconds / 10).ToString("00", System.Globalization.CultureInfo.InvariantCulture) : main;
     }
+    /// <summary>A length in words ("2 minutes", "1 hour 30 minutes") so it can't be mistaken for a time of day.</summary>
+    public static string Words(double seconds)
+    {
+        int s = (int)Math.Round(Math.Max(0, seconds)), h = s / 3600, m = s % 3600 / 60, sec = s % 60;
+        static string U(int n, string unit) => n == 1 ? $"1 {unit}" : $"{n} {unit}s";
+        var parts = new List<string>(); if (h > 0) parts.Add(U(h, "hour")); if (m > 0) parts.Add(U(m, "minute")); if (sec > 0 && h == 0) parts.Add(U(sec, "second"));
+        return parts.Count == 0 ? "0 seconds" : string.Join(" ", parts);
+    }
     public static string Span(int seconds) => seconds switch
     {
         < 60 => $"{seconds}s",

@@ -33,9 +33,9 @@ sealed class ReplayHero : Control, IMeasured
         Theme.Label(g, state.ToUpperInvariant(), Theme.Caption, stateColor == Theme.Faint ? Theme.Faint : Theme.Mix(stateColor, Theme.Text, .35f), new Rectangle(Theme.S(14), y0, Theme.S(160), Theme.S(16)));
         // Big buffered time.
         int ringD = Theme.S(76), ringX = Width - ringD;
-        string big = Theme.Duration(buffered);
+        string big = Theme.Duration(Math.Min(buffered, target)); // segments land just before the oldest is trimmed; never show more than the setting
         Theme.Label(g, big, Theme.Display, Theme.Text, new Rectangle(0, Theme.S(18), ringX - Theme.S(8), Theme.S(42)));
-        Theme.Label(g, $"buffered of {Theme.Duration(target)} history", Theme.Small, Theme.Muted, new Rectangle(0, Theme.S(58), ringX - Theme.S(8), Theme.S(18)));
+        Theme.Label(g, $"saved · keeps the last {Theme.Words(target)}", Theme.Small, Theme.Muted, new Rectangle(0, Theme.S(58), ringX - Theme.S(8), Theme.S(18)));
         // Disk ring.
         var ring = new RectangleF(ringX + Theme.S(4f), Theme.S(4f), ringD - Theme.S(8f), ringD - Theme.S(8f));
         float frac = capBytes > 0 ? (float)Math.Clamp(bytes / (double)capBytes, 0, 1) : 0;

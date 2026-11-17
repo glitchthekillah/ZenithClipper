@@ -1091,7 +1091,7 @@ sealed class BufferMeter : Control, IMeasured
     public int MeasureHeight(int width) => Theme.S(66);
     public void Update(RecorderStatus s, Settings settings)
     {
-        buffered = s.BufferedSeconds; bytes = s.BufferBytes; capBytes = settings.MaxBufferMiB * 1048576; BufferTarget = settings.BufferSeconds; capturing = s.Capturing; Invalidate();
+        buffered = Math.Min(s.BufferedSeconds, settings.BufferSeconds); bytes = s.BufferBytes; capBytes = settings.MaxBufferMiB * 1048576; BufferTarget = settings.BufferSeconds; capturing = s.Capturing; Invalidate();
     }
     protected override void OnPaint(PaintEventArgs e)
     {
