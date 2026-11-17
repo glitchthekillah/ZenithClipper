@@ -151,7 +151,7 @@ function fitAll() {
   ed.style.transform = `translateX(-50%) scale(${s})`; ed.style.transformOrigin = 'top center';
   const rp = $('#rp-fit'), small = innerWidth < 900; const rs = small ? Math.min(.8, (innerWidth - 40) / 402, (innerHeight * .52) / 640) : Math.min(1.25, (innerHeight * .86) / 640);
   rp.style.transform = `scale(${rs})`; rp.parentElement.style.width = 402 * rs + 'px'; rp.parentElement.style.height = 640 * rs + 'px';
-  const hs = Math.min(1, innerHeight * .5 / 640, innerWidth * .8 / 400); $('#hero-panel').parentElement.style.scale = hs;
+  const hs = Math.min(1.3, innerHeight * .64 / 640, innerWidth * .8 / 400); $('#hero-stage').style.zoom = hs;
 }
 addEventListener('resize', fitAll); fitAll();
 
@@ -183,7 +183,12 @@ function start() {
   if (!window.gsap) return;
   gsap.from('#g-back .ch', { yPercent: 110, opacity: 0, duration: 1.4, stagger: .06, ease: 'expo.out', delay: .4 });
   gsap.from('#g-front .ch', { yPercent: -60, opacity: 0, duration: 1.4, stagger: .06, ease: 'expo.out', delay: .6 });
-  gsap.from('#hero-panel', { y: 120, opacity: 0, duration: 1.6, ease: 'expo.out', delay: .5 });
+  gsap.from('#hero-panel', { y: 120, opacity: 0, duration: 1.6, ease: 'expo.out', delay: .5, rotate: -4 });
+  if (!reduce && matchMedia('(pointer:fine)').matches) {
+    const px = gsap.quickTo('#hero-par', 'x', { duration: .9, ease: 'power3.out' }), py = gsap.quickTo('#hero-par', 'y', { duration: .9, ease: 'power3.out' });
+    const gx = gsap.quickTo('#hero .giant', 'x', { duration: 1.2, ease: 'power3.out' }), gy = gsap.quickTo('#hero .giant', 'y', { duration: 1.2, ease: 'power3.out' });
+    addEventListener('mousemove', (e) => { if (scrollY > innerHeight * 2) return; const dx = e.clientX / innerWidth - .5, dy = e.clientY / innerHeight - .5; px(Math.round(dx * 28)); py(Math.round(dy * 20)); gx(Math.round(-dx * 14)); gy(Math.round(-dy * 8)); }, { passive: true });
+  }
   gsap.from('.hero-tag', { y: 20, opacity: 0, duration: 1.2, ease: 'expo.out', delay: 1 });
 }
 
@@ -203,8 +208,8 @@ const playIn = (sel) => $$('video', $(sel)).forEach((v) => vio.observe(v));
 gsap.timeline({ scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 1 } })
   .to('#g-back', { yPercent: -60, xPercent: -18, opacity: 0, ease: 'none' }, 0)
   .to('#g-front', { yPercent: 70, xPercent: 18, opacity: 0, ease: 'none' }, 0)
-  .to('#hero-panel', { rotate: 0, ease: 'none' }, 0)
   .to('#hero-stage', innerWidth < 820 ? { opacity: 0, yPercent: -80, ease: 'none', duration: .3 } : { left: '72%', ease: 'none' }, 0)
+  .to('#hero-panel', { rotate: 0, ease: 'none' }, 0)
   .to('.hero-tag', { opacity: 0, ease: 'none', duration: .2 }, 0)
   .fromTo('#hero-copy', { opacity: 0, y: 40 }, { opacity: 1, y: 0, ease: 'none', duration: .35 }, .3)
   .to('#hero-copy, #hero-stage', { opacity: 0, y: -60, ease: 'none', duration: .25 }, .85);
