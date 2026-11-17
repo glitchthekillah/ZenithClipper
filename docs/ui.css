@@ -31,7 +31,7 @@
 @keyframes zpblink{50%{opacity:.25}}
 .zp-time{font:700 32px/1.1 'Segoe UI Variable Display','Segoe UI',Inter,sans-serif;letter-spacing:-.5px;font-variant-numeric:tabular-nums;margin-top:2px}
 .zp-sub{color:var(--muted);font-size:12px}
-.zp-ring{width:84px;height:84px;border-radius:50%;display:grid;place-content:center;text-align:center;background:radial-gradient(var(--bg) 66%,transparent 67%),conic-gradient(var(--acc) 0 var(--fill,30%),#232529 0)}
+.zp-ring{width:84px;height:84px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25;text-align:center;background:radial-gradient(var(--bg) 66%,transparent 67%),conic-gradient(var(--acc) 0 var(--fill,30%),#232529 0)}
 .zp-ring b{display:block;font:700 12px 'Segoe UI',Inter,sans-serif;white-space:nowrap}.zp-ring span{display:block;font-size:10px;color:var(--faint);white-space:nowrap}
 .zp-chips{display:flex;gap:6px;margin-top:12px}
 .zp-chips span{padding:4px 9px;border-radius:99px;background:var(--raised);border:1px solid var(--line);color:var(--soft);font-size:11px}
