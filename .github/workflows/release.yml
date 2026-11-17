@@ -1,7 +1,7 @@
 name: release
 # Builds every download and attaches it to the GitHub release for the tag:
 #   Windows: installer (setup.exe) and portable zip.  Linux: AppImage, .deb and tar.gz.  Plus SHA256SUMS.
-# Publish a release (gh release create vX.Y.Z --notes-file ...) and this fills it with files.
+# Create a draft (gh release create vX.Y.Z --draft --notes-file ...), then run this workflow for the tag (gh workflow run release.yml -f tag=vX.Y.Z).
 # It can also be run by hand for an existing tag.
 on:
   release:
@@ -173,3 +173,6 @@ jobs:
         with:
           tag_name: ${{ env.TAG }}
           files: files/*
+          # Releases are created as drafts and only go public here, once every file is attached.
+          draft: false
+          make_latest: true
