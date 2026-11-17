@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZenithClipper · Instant replay with a real editor</title>
+<meta name="description" content="ZenithClipper keeps the last minutes of your screen and saves a clip when you press Alt+C, with a full clip editor built in. Windows and Linux, about 89 MB of RAM while recording.">
+<meta name="theme-color" content="#0e0f12">
+<link rel="canonical" href="https://glitchthekillah.github.io/ZenithClipper/">
+<meta name="keywords" content="instant replay, clip recorder, game clipping software, ShadowPlay alternative, Medal alternative, Linux instant replay, screen recorder, video editor, NVENC, AMF, Quick Sync">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"ZenithClipper","applicationCategory":"MultimediaApplication","operatingSystem":"Windows 10, Windows 11, Linux","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Instant replay recorder with a built-in multitrack clip editor. Hardware encoding on NVIDIA, AMD and Intel.","url":"https://glitchthekillah.github.io/ZenithClipper/","downloadUrl":"https://github.com/glitchthekillah/ZenithClipper/releases/latest","author":{"@type":"Person","name":"glitch","url":"https://glitchthekillah.com"}}</script>
+<meta property="og:title" content="ZenithClipper">
+<meta property="og:description" content="Instant replay with a real editor. Windows and Linux.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3CradialGradient id='g' cx='.34' cy='.28' r='.8'%3E%3Cstop offset='0' stop-color='%23ffe1d9'/%3E%3Cstop offset='.32' stop-color='%23ff8466'/%3E%3Cstop offset='.7' stop-color='%23e05e41'/%3E%3Cstop offset='1' stop-color='%2359251a'/%3E%3C/radialGradient%3E%3Ccircle cx='32' cy='32' r='28' fill='url(%23g)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --acc:#ff6b4a; --bg:#0e0f12; --surface:#16171b; --raised:#1d1e23; --line:#2a2b31; --text:#ecedf0; --muted:#9a9ca4; --dim:#6b6d75;
+  --ease:cubic-bezier(.19,1,.22,1); --pad:clamp(18px,4vw,64px);
+  --sans:'Inter Tight',system-ui,-apple-system,Segoe UI,sans-serif; --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font:400 17px/1.55 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body.loading{overflow:hidden}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--acc);color:#140b08}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:6px}
+.acc{color:var(--acc)}
+
+/* The orb: same recipe as the app's Theme.Orb (path gradient, highlight at 34% / 28%) */
+.orb{border-radius:50%;aspect-ratio:1;background:radial-gradient(circle at 34% 28%,
+  color-mix(in srgb,var(--acc),#fff 75%) 0,color-mix(in srgb,var(--acc),#fff 16%) 32%,color-mix(in srgb,var(--acc),#000 12%) 70%,color-mix(in srgb,var(--acc),#000 65%) 100%);
+  box-shadow:0 0 0 max(1px,4.5%) #3a3d44 inset}
+.orb.glow{box-shadow:0 0 60px color-mix(in srgb,var(--acc) 45%,transparent),0 0 0 1px #3a3d4480 inset}
+
+/* ---------- Loader ---------- */
+#loader{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--bg);transition:opacity .7s var(--ease),visibility .7s}
+#loader.done{opacity:0;visibility:hidden}
+.ld{display:grid;justify-items:center;gap:26px}
+.ld-stage{position:relative;width:180px;height:180px;display:grid;place-items:center}
+.ld-ring{position:absolute;inset:0;transform:rotate(-90deg)}
+.ld-ring circle{fill:none;stroke-width:3}
+.ld-ring .tr{stroke:#24252b}
+.ld-ring .pr{stroke:var(--acc);stroke-linecap:round;stroke-dasharray:540;stroke-dashoffset:540;transition:stroke-dashoffset .35s var(--ease)}
+.ld-orb{width:84px;animation:drop 1.1s cubic-bezier(.3,0,.4,1) both}
+.ld-shadow{position:absolute;bottom:34px;width:70px;height:10px;border-radius:50%;background:radial-gradient(#000a,transparent 70%);animation:shadow 1.1s cubic-bezier(.3,0,.4,1) both}
+@keyframes drop{0%{transform:translateY(-220px) scale(.9)}55%{transform:translateY(0) scale(1.12,.86)}70%{transform:translateY(-34px) scale(.96,1.04)}85%{transform:translateY(0) scale(1.04,.96)}100%{transform:translateY(0) scale(1)}}
+@keyframes shadow{0%{opacity:0;transform:scale(.3)}55%{opacity:1;transform:scale(1.1)}70%{opacity:.6;transform:scale(.8)}100%{opacity:.9;transform:scale(1)}}
+.ld-orb.pulse{animation:breathe 1.8s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.06);filter:brightness(1.12)}}
+.ld-word{font:800 22px var(--sans);letter-spacing:-.01em;display:flex;overflow:hidden}
+.ld-word span{display:inline-block;transform:translateY(110%);animation:rise .7s var(--ease) forwards}
+@keyframes rise{to{transform:none}}
+.ld-pct{font:500 12px var(--mono);color:var(--dim);letter-spacing:.12em}
+
+/* ---------- Top bar ---------- */
+.top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:22px;padding:14px var(--pad);
+  background:linear-gradient(var(--bg) 30%,color-mix(in srgb,var(--bg) 0%,transparent));}
+.brand{display:flex;align-items:center;gap:10px;font:700 17px var(--sans)}
+.brand .orb{width:22px}
+.top nav{margin-left:auto;display:flex;gap:26px;font-size:14px;color:var(--muted)}
+.top nav a:hover{color:var(--text)}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 20px;border-radius:12px;font:600 15px var(--sans);transition:transform .25s var(--ease),background .25s}
+.btn:active{transform:scale(.97)}
+.btn.solid{background:var(--acc);color:#160b07}
+.btn.ghost{border:1px solid var(--line);color:var(--text)}
+.btn.ghost:hover{border-color:var(--muted)}
+.btn.sm{padding:8px 14px;font-size:14px;border-radius:10px}
+.progress{position:fixed;top:0;left:0;height:2px;width:100%;transform-origin:0 50%;transform:scaleX(0);background:var(--acc);z-index:60}
+@media (max-width:760px){.top nav{display:none}.top .btn{margin-left:auto}}
+
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:0;transition:opacity 1.2s var(--ease)}
+.gl-on #gl{opacity:1}
+main,footer{position:relative;z-index:2}
+.gl-on .hero-orb,.gl-on .dl .big-orb{visibility:hidden}
+/* ---------- Hero ---------- */
+.hero{position:relative;min-height:100svh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);align-items:center;gap:clamp(24px,4vw,72px);padding:120px var(--pad) 70px;overflow:hidden}
+.hero h1{margin:0;font:800 clamp(44px,6.4vw,104px)/.95 var(--sans);letter-spacing:-.045em}
+.hero p{max-width:30em;color:var(--muted);font-size:clamp(17px,1.4vw,20px);margin:26px 0 34px}
+.hero .ctas{display:flex;flex-wrap:wrap;gap:12px}
+.hero .meta{margin-top:26px;font:500 12px var(--mono);color:var(--dim);letter-spacing:.06em}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font:500 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--acc);margin-bottom:20px}
+.eyebrow i{width:8px;height:8px;border-radius:50%;background:#ef4444;animation:blink 1.4s steps(2) infinite}
+@keyframes blink{50%{opacity:.2}}
+.monitor{position:relative;border-radius:18px;padding:10px;background:linear-gradient(#202127,#15161a);border:1px solid #2c2d34;box-shadow:0 60px 120px -40px #000,0 0 0 1px #0006}
+.monitor canvas{display:block;width:100%;aspect-ratio:16/9;border-radius:10px;background:#120c22}
+.rec{position:absolute;top:24px;left:24px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:99px;background:#0009;backdrop-filter:blur(6px);font:600 12px var(--mono)}
+.rec i{width:8px;height:8px;border-radius:50%;background:#ef4444;animation:blink 1.4s steps(2) infinite}
+.hero-orb{position:absolute;width:min(46vw,620px);right:-12vw;top:-16vw;opacity:.16;filter:blur(2px);pointer-events:none}
+@media (max-width:900px){.hero{grid-template-columns:1fr;padding-top:100px}.hero-orb{width:80vw;right:-30vw;top:-20vw}}
+
+/* ---------- Scroll scenes ---------- */
+.scene{position:relative;height:300vh}
+.scene.tall{height:420vh}
+.stage{position:sticky;top:0;height:100vh;height:100svh;display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:center;gap:clamp(24px,4vw,80px);padding:84px var(--pad) 40px;overflow:hidden}
+.stage.flip .copy{order:2}
+.stage.wide{grid-template-columns:minmax(0,.6fr) minmax(0,1.4fr)}
+.copy h2{margin:0 0 18px;font:800 clamp(34px,4.4vw,68px)/1 var(--sans);letter-spacing:-.04em}
+.copy p{margin:0;color:var(--muted);font-size:clamp(16px,1.25vw,19px);max-width:30em}
+.copy .fine{margin-top:16px;font:500 12px/1.6 var(--mono);color:var(--dim)}
+.steps{list-style:none;padding:0;margin:28px 0 0;display:grid;gap:4px}
+.steps li{display:flex;align-items:center;gap:12px;padding:9px 0;color:var(--dim);font-weight:500;transition:color .4s}
+.steps li b{font:500 12px var(--mono);width:28px;color:var(--dim);transition:color .4s}
+.steps li.on{color:var(--text)}.steps li.on b{color:var(--acc)}
+.steps li::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.visual{position:relative;display:grid;place-items:center;min-width:0}
+@media (max-width:900px){
+  .stage,.stage.flip,.stage.wide{grid-template-columns:1fr;grid-template-rows:auto 1fr;align-content:start;padding-top:76px;gap:14px}
+  .stage.flip .copy{order:0}
+  .copy h2{font-size:clamp(28px,8vw,40px);margin-bottom:10px}
+  .copy p{font-size:15px}
+  .steps{display:none}.copy .fine{display:none}
+  .visual{align-self:center}
+}
+
+/* Window chrome shared by the recreations */
+.win{width:100%;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid #2b2c32;box-shadow:0 50px 100px -40px #000c}
+.win-top{display:flex;align-items:center;gap:10px;height:38px;padding:0 14px;background:#131418;border-bottom:1px solid #24252b;font-size:13px;color:var(--muted)}
+.win-top .orb{width:16px}
+.win-top b{color:var(--text);font-weight:600}
+.win-top .sp{margin-left:auto;display:flex;gap:16px;color:var(--dim)}
+
+/* ---------- Panel recreation (matches the Windows panel) ---------- */
+.panel{width:min(100%,400px);container-type:inline-size;background:#17181c;border:1px solid #2b2c32;border-radius:16px;box-shadow:0 50px 100px -40px #000c;overflow:hidden;font-size:14px;line-height:1.35}
+.pn-head{display:flex;align-items:center;gap:3cqw;padding:4.4cqw 5cqw;border-bottom:1px solid #26272d}
+.pn-head .orb{width:6.6cqw}
+.pn-head b{font-size:4.2cqw}
+.pn-head .st{margin-left:auto;display:flex;align-items:center;gap:1.6cqw;color:#a9aab0;font-size:3.7cqw}
+.pn-head .st i{width:2.2cqw;height:2.2cqw;border-radius:50%;background:#ef4444}
+.pn-body{padding:5cqw}
+.pn-row{display:flex;align-items:center;justify-content:space-between}
+.pn-row b{font-size:4.6cqw}
+.tog{display:flex;align-items:center;gap:2cqw;color:#a9aab0;font-size:3.8cqw}
+.tog i{width:9cqw;height:5cqw;border-radius:9cqw;background:var(--acc);position:relative}
+.tog i::after{content:'';position:absolute;right:.7cqw;top:.7cqw;width:3.6cqw;height:3.6cqw;border-radius:50%;background:#fff}
+.pn-big{display:flex;justify-content:space-between;align-items:center;margin-top:4cqw}
+.pn-big small{display:flex;align-items:center;gap:1.6cqw;color:var(--acc);font-size:3.1cqw;letter-spacing:.04em}
+.pn-big small i{width:2cqw;height:2cqw;border-radius:50%;background:#ef4444;animation:blink 1.4s steps(2) infinite}
+.pn-big strong{display:block;font:700 11cqw/1.05 var(--sans);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pn-big span{color:#a9aab0;font-size:3.4cqw}
+.ring{width:19cqw;aspect-ratio:1;border-radius:50%;display:grid;place-content:center;text-align:center;background:radial-gradient(#17181c 63%,transparent 64%),conic-gradient(var(--acc) 0 var(--fill,2%),#2a2b30 0)}
+.ring b{font-size:3.6cqw}.ring span{font-size:2.5cqw;color:#8a8b90}
+.chips{display:flex;flex-wrap:wrap;gap:1.6cqw;margin-top:3.6cqw}
+.chips span{font-size:2.9cqw;padding:1.1cqw 2.4cqw;border-radius:9cqw;background:#24252a;color:#c9cad0}
+.strip{position:relative;height:11cqw;margin-top:4cqw;border-radius:2cqw;background:#1f2025;border:1px solid #2c2d33;overflow:hidden}
+.strip .seg{position:absolute;top:0;bottom:0;width:100%;background:repeating-linear-gradient(90deg,#2a2b31 0 7.6%,#26272c 7.6% 8%)}
+.strip .sel{position:absolute;right:0;top:0;bottom:0;width:var(--sel,8%);background:color-mix(in srgb,var(--acc) 22%,#3a3b42);border-left:1px solid color-mix(in srgb,var(--acc) 60%,transparent);transition:width .5s var(--ease)}
+.strip .now{position:absolute;right:0;top:0;bottom:0;width:.8cqw;background:var(--acc)}
+.strip-l{display:flex;justify-content:space-between;margin-top:1.4cqw;color:#7d7f87;font-size:2.8cqw}
+.durs{display:grid;grid-template-columns:repeat(6,1fr);margin-top:3.6cqw;padding:1cqw;border-radius:2cqw;border:1px solid #2c2d33;font-size:3.3cqw;text-align:center;position:relative}
+.durs span{position:relative;z-index:1;padding:1.8cqw 0;color:#a9aab0;transition:color .3s}
+.durs span.on{color:#fff}
+.durs .pill{position:absolute;top:1cqw;bottom:1cqw;left:1cqw;width:calc((100% - 2cqw)/6);border-radius:1.4cqw;background:#33343b;transition:transform .45s var(--ease)}
+.save{display:flex;align-items:center;justify-content:space-between;margin-top:4cqw;padding:3.4cqw 4cqw;border-radius:2cqw;background:var(--acc);color:#1a0d08;font-weight:700;font-size:4.2cqw;transition:transform .2s,filter .2s}
+.save kbd{font:500 3.1cqw var(--sans);padding:.7cqw 1.8cqw;border:1px solid #1a0d0866;border-radius:1.3cqw}
+.save.press{transform:scale(.97);filter:brightness(1.15)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:2cqw;margin-top:4cqw}
+.tiles div{padding:2.6cqw;border-radius:2cqw;border:1px solid #2c2d33;background:#1b1c20}
+.tiles small{display:block;font-size:2.5cqw;color:#7d7f87;letter-spacing:.03em}
+.tiles b{display:block;font-size:4.2cqw;margin:.8cqw 0 .2cqw;font-variant-numeric:tabular-nums}
+.tiles span{font-size:2.8cqw;color:#a9aab0}
+
+.keys{position:absolute;display:flex;gap:12px;align-items:center;font:700 22px var(--sans);opacity:0;transform:translateY(16px) scale(.96);transition:opacity .4s var(--ease),transform .4s var(--ease);pointer-events:none}
+.keys.show{opacity:1;transform:none}
+.key{min-width:64px;height:64px;padding:0 18px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(#2b2c33,#1c1d22);border:1px solid #3a3b43;box-shadow:0 6px 0 #0e0f12,0 20px 40px -10px #000;transition:transform .12s,box-shadow .12s}
+.key.down{transform:translateY(5px);box-shadow:0 1px 0 #0e0f12,0 10px 20px -10px #000;border-color:var(--acc);color:var(--acc)}
+.toast{position:absolute;display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:14px;background:#1d1e23;border:1px solid #33343b;box-shadow:0 30px 60px -20px #000;opacity:0;transform:translateY(24px);transition:opacity .5s var(--ease),transform .5s var(--ease);font-size:14px;min-width:280px}
+.toast.show{opacity:1;transform:none}
+.toast canvas{width:86px;aspect-ratio:16/9;border-radius:6px;display:block}
+.toast b{display:block;font-size:14px}.toast span{color:var(--muted);font-size:12.5px;font-family:var(--mono)}
+.toast .ok{margin-left:auto;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--acc) 20%,transparent);color:var(--acc)}
+
+/* ---------- Lightweight ---------- */
+.meter{width:min(100%,560px);display:grid;gap:16px}
+.mem{display:flex;align-items:baseline;gap:14px}
+.mem strong{font:800 clamp(80px,11vw,170px)/.9 var(--sans);letter-spacing:-.05em;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--acc),#fff 30%));-webkit-background-clip:text;background-clip:text;color:transparent}
+.mem span{font:700 clamp(24px,2.6vw,38px) var(--sans);color:var(--muted)}
+.tm{border-radius:14px;border:1px solid #2b2c32;background:var(--surface);overflow:hidden;font-size:14px}
+.tm-h,.tm-r{display:grid;grid-template-columns:1.6fr 1fr 1fr;padding:11px 16px;align-items:center}
+.tm-h{font:500 11.5px var(--mono);letter-spacing:.08em;color:var(--dim);border-bottom:1px solid #24252b}
+.tm-r{border-bottom:1px solid #202126;font-variant-numeric:tabular-nums}
+.tm-r:last-child{border:0}
+.tm-r b{display:flex;align-items:center;gap:10px;font-weight:600}
+.tm-r b .orb{width:16px}
+.tm-r .bar{position:relative;height:6px;border-radius:9px;background:#24252b;margin-right:16px;overflow:hidden}
+.tm-r .bar i{position:absolute;inset:0 auto 0 0;width:var(--w,0%);background:var(--acc);border-radius:9px}
+.spark{display:block;width:100%;height:110px;border-radius:14px;border:1px solid #2b2c32;background:var(--surface)}
+
+/* ---------- Encoder pipeline ---------- */
+.pipe{width:min(100%,640px);display:grid;gap:18px}
+.flow{position:relative;display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:10px}
+.node{position:relative;padding:16px;border-radius:14px;background:var(--surface);border:1px solid #2b2c32;text-align:center;font-size:13px;color:var(--muted)}
+.node b{display:block;color:var(--text);font-size:15px;margin-bottom:2px}
+.node canvas{display:block;width:100%;aspect-ratio:16/9;border-radius:8px;margin-bottom:10px}
+.node.enc{border-color:color-mix(in srgb,var(--acc) 50%,transparent);box-shadow:0 0 40px -10px color-mix(in srgb,var(--acc) 50%,transparent)}
+.chip-g{display:grid;place-items:center;width:100%;aspect-ratio:16/9;margin-bottom:10px;border-radius:8px;background:repeating-linear-gradient(45deg,#1f2025 0 6px,#1b1c20 6px 12px);position:relative}
+.chip-g i{width:44%;aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,#2e2f36,#1c1d22);border:1px solid color-mix(in srgb,var(--acc) 60%,#333);display:grid;place-items:center;font:700 11px var(--mono);color:var(--acc);font-style:normal;box-shadow:0 0 24px -4px color-mix(in srgb,var(--acc) 60%,transparent)}
+.disk{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;width:100%;aspect-ratio:16/9;margin-bottom:10px;padding:8px;border-radius:8px;background:#1b1c20}
+.disk i{border-radius:3px;background:#2a2b31;transition:background .3s}
+.disk i.on{background:color-mix(in srgb,var(--acc) 70%,#222)}
+.wire{width:44px;height:2px;background:repeating-linear-gradient(90deg,var(--acc) 0 6px,transparent 6px 12px);background-size:24px 2px;animation:wire .6s linear infinite}
+@keyframes wire{to{background-position:24px 0}}
+.gpus{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.gpu{padding:14px;border-radius:12px;background:var(--surface);border:1px solid #2b2c32;font-size:13px;color:var(--muted);transition:border-color .4s,background .4s}
+.gpu b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+.gpu.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 9%,var(--surface))}
+.gpu.sw{border-style:dashed}
+@media (max-width:620px){.gpus{grid-template-columns:repeat(2,1fr)}.flow{grid-template-columns:1fr;gap:6px}.wire{width:2px;height:22px;justify-self:center;background:repeating-linear-gradient(180deg,var(--acc) 0 6px,transparent 6px 12px);background-size:2px 24px;animation:wirev .6s linear infinite}.node canvas,.chip-g,.disk{display:none}}
+@keyframes wirev{to{background-position:0 24px}}
+
+/* ---------- Audio mixer ---------- */
+.mixer{width:min(100%,560px);padding:22px;border-radius:16px;background:#17181c;border:1px solid #2b2c32;box-shadow:0 50px 100px -40px #000c}
+.mx-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.mx-h b{font-size:18px}.mx-h span{font-size:13px;color:var(--dim)}
+.mx-r{display:grid;grid-template-columns:30px 90px 1fr 120px 46px;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #222328;transition:opacity .4s}
+.mx-r:last-of-type{border:0}
+.mx-r .ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--sans);color:#fff}
+.mx-r canvas{width:100%;height:30px;display:block}
+.sl{position:relative;height:5px;border-radius:9px;background:#2e2f35}
+.sl i{position:absolute;inset:0 auto 0 0;width:var(--v);border-radius:9px;background:var(--acc)}
+.sl u{position:absolute;left:var(--v);top:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;background:#fff}
+.mx-r .v{text-align:right;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mx-r.off{opacity:.5}.mx-r.off .sl i{background:#4a4b52}.mx-r.off .v{color:#ef4444}
+.mx-out{margin-top:16px;padding:14px;border-radius:12px;background:#1d1e23;border:1px solid #2b2c32}
+.mx-out small{font:500 11.5px var(--mono);letter-spacing:.08em;color:var(--dim)}
+.mx-out canvas{display:block;width:100%;height:56px;margin-top:6px}
+@media (max-width:620px){.mx-r{grid-template-columns:26px 70px 1fr 40px}.mx-r canvas{display:none}}
+
+/* ---------- Editor recreation ---------- */
+.ed{width:100%;max-width:880px;font-size:12px;container-type:inline-size}
+.ed-menu{display:flex;gap:14px;padding:0 14px;height:30px;align-items:center;background:#131418;border-bottom:1px solid #222328;color:#a9aab0}
+.ed-menu .ex{margin-left:auto;padding:3px 10px;border-radius:6px;background:var(--acc);color:#1a0d08;font-weight:700}
+.ed-main{display:grid;grid-template-columns:22% 1fr 22%;height:clamp(150px,27cqw,250px);border-bottom:1px solid #222328}
+.bin{padding:10px;border-right:1px solid #222328;display:grid;align-content:start;gap:8px}
+.bin small,.insp small{font:500 10px var(--mono);letter-spacing:.08em;color:var(--dim)}
+.bin .it{display:flex;gap:8px;align-items:center;padding:4px;border-radius:7px;border:1px solid transparent;font-size:11px;color:#c9cad0}
+.bin .it canvas,.bin .it .th{width:46px;aspect-ratio:16/9;border-radius:4px;display:block;flex:none}
+.bin .it.sel{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 10%,transparent)}
+.prev{position:relative;display:grid;place-items:center;background:#0b0b0d;padding:10px}
+.prev canvas{height:100%;max-width:100%;aspect-ratio:16/9;display:block;border-radius:3px}
+.title-ov{position:absolute;left:50%;bottom:22%;transform:translateX(-50%) scale(var(--ts,.6));opacity:var(--to,0);font:800 clamp(18px,4.2cqw,40px) var(--sans);letter-spacing:.02em;color:#fff;text-shadow:0 0 18px var(--acc),0 2px 0 #000;transition:none;white-space:nowrap}
+.insp{padding:10px;border-left:1px solid #222328;display:grid;align-content:start;gap:9px;font-size:11px;color:#a9aab0}
+.insp .f{display:flex;justify-content:space-between}
+.insp .f b{color:#e2e3e7;font-weight:500;font-variant-numeric:tabular-nums}
+.insp .fx{display:flex;align-items:center;gap:6px}.insp .fx i{width:10px;height:10px;border-radius:3px;border:1px solid #555;transition:background .3s}
+.insp .fx.on i{background:var(--acc);border-color:var(--acc)}
+.tools{display:flex;gap:6px;align-items:center;padding:6px 10px;background:#141519;border-bottom:1px solid #222328;color:#a9aab0;font-size:11px}
+.tools span{padding:3px 8px;border-radius:5px;transition:background .3s,color .3s}
+.tools span.on{background:color-mix(in srgb,var(--acc) 20%,transparent);color:var(--acc)}
+.tl{position:relative;padding:6px 0 10px;background:#141519}
+.ruler{position:relative;height:16px;margin-left:66px;border-bottom:1px solid #26272c;background:repeating-linear-gradient(90deg,#3a3b42 0 1px,transparent 1px 10%);background-size:10% 6px;background-repeat:repeat-x;background-position:0 100%}
+.trk{display:flex;align-items:center;height:40px;border-bottom:1px solid #1f2025}
+.trk>b{width:66px;flex:none;padding-left:10px;font:500 11px var(--sans);color:#8a8b92}
+.lane{position:relative;flex:1;height:30px}
+.clip{position:absolute;top:0;bottom:0;border-radius:5px;overflow:hidden;border:1px solid #0006;display:flex;align-items:center;font-size:10.5px;color:#fff;padding-left:6px;white-space:nowrap}
+.clip.v{background:linear-gradient(#5b3fa3,#3f2b75);border-color:#7b5bd0}
+.clip.v::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,#ffffff10 0 18px,transparent 18px 36px);pointer-events:none}
+.clip.a{background:#1e4f45;border-color:#2f7d6c}
+.clip.a canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.8}
+.clip.t{background:linear-gradient(#7a3b2a,#57281c);border-color:var(--acc)}
+.clip.sel{box-shadow:0 0 0 2px var(--acc)}
+.clip .edge{position:absolute;top:0;bottom:0;width:5px;background:var(--acc);opacity:0}
+.clip.trim .edge.r{right:0;opacity:1}
+.cut{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff;box-shadow:0 0 10px #fff;opacity:0}
+.playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--acc);z-index:5;pointer-events:none}
+.playhead::before{content:'';position:absolute;top:-1px;left:-5px;border:6px solid transparent;border-top:8px solid var(--acc)}
+.dragghost{position:absolute;z-index:9;width:110px;padding:6px 8px;border-radius:8px;background:#26272d;border:1px solid var(--acc);box-shadow:0 20px 40px -10px #000;font-size:11px;display:flex;gap:6px;align-items:center;pointer-events:none;opacity:0}
+.dragghost canvas{width:34px;aspect-ratio:16/9;border-radius:3px}
+.ed-keys{position:absolute;right:18px;top:18px}
+.ed-keys .key{min-width:48px;height:48px;font-size:17px;border-radius:11px}
+@media (max-width:620px){.ed-main{grid-template-columns:1fr}.bin,.insp{display:none}.ed{font-size:11px}}
+
+/* ---------- Formats ---------- */
+.fmt{width:min(100%,640px);display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:center}
+.orbit{position:relative;aspect-ratio:1;width:100%}
+.orbit .core{position:absolute;inset:34%;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle,#1f2025,#15161a);border:1px solid #2b2c32;font:600 13px var(--sans);color:var(--muted);text-align:center}
+.orbit .core .orb{width:46px;height:46px;margin:0 auto 6px}
+.orbit span.f{position:absolute;left:50%;top:50%;padding:5px 10px;border-radius:99px;background:#1d1e23;border:1px solid #2f3037;font:600 12px var(--mono);white-space:nowrap;transform:translate(-50%,-50%)}
+.orbit .k-v{color:#b9a6ff}.orbit .k-a{color:#7fe0c6}.orbit .k-i{color:#ffd28a}
+.exp{display:grid;gap:8px}
+.exp div{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid #2b2c32;font-size:13px}
+.exp div b{font-weight:600}.exp div span{font:500 11.5px var(--mono);color:var(--dim)}
+.exp div i{grid-column:1/-1;height:4px;border-radius:9px;background:#26272c;position:relative;overflow:hidden}
+.exp div i::after{content:'';position:absolute;inset:0 auto 0 0;width:var(--w,0%);background:var(--acc);border-radius:9px}
+@media (max-width:620px){.fmt{grid-template-columns:1fr}.orbit{width:72%;justify-self:center}.exp div:nth-child(n+5){display:none}}
+
+/* ---------- Appearance ---------- */
+.look{width:min(100%,620px);display:grid;gap:18px}
+.sw{display:flex;flex-wrap:wrap;gap:10px}
+.sw i{width:34px;height:34px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px var(--bg),0 0 0 2px transparent;transition:box-shadow .3s,transform .3s var(--ease)}
+.sw i.on{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--c);transform:scale(1.08)}
+.tones{display:flex;gap:8px}
+.tones span{padding:7px 14px;border-radius:9px;border:1px solid #2b2c32;font-size:13px;color:var(--muted);transition:all .3s}
+.tones span.on{border-color:var(--acc);color:var(--text);background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.look-pair{display:grid;grid-template-columns:.8fr 1.2fr;gap:14px;align-items:start}
+.look-pair .panel{width:100%}
+.mini-ed{border-radius:12px;overflow:hidden;border:1px solid #2b2c32;background:var(--tone,#16171b);transition:background .5s}
+.mini-ed .bar{height:24px;display:flex;align-items:center;gap:8px;padding:0 10px;background:#0002;font-size:11px;color:var(--muted)}
+.mini-ed .bar .orb{width:12px}
+.mini-ed .bar em{margin-left:auto;padding:2px 8px;border-radius:5px;background:var(--acc);color:#140b08;font-style:normal;font-weight:700}
+.mini-ed canvas{display:block;width:100%;aspect-ratio:16/8}
+.mini-ed .lanes{padding:8px;display:grid;gap:5px}
+.mini-ed .lanes i{height:14px;border-radius:4px;background:color-mix(in srgb,var(--acc) 55%,#222);width:var(--w)}
+.mini-ed .lanes i:nth-child(2){background:#24564b}
+@media (max-width:620px){.look-pair{grid-template-columns:1fr}.look-pair .panel{display:none}}
+
+/* ---------- Platforms + updates ---------- */
+.plat{position:relative;width:min(100%,680px);height:min(62vh,460px)}
+.plat .w1{position:absolute;left:0;top:0;width:66%}
+.plat .w2{position:absolute;right:0;bottom:6%;width:52%}
+.zen{border-radius:12px;overflow:hidden;background:#2d2d2d;border:1px solid #444;box-shadow:0 40px 80px -30px #000;font:13px 'Ubuntu',var(--sans);color:#e6e6e6}
+.zen-top{height:34px;display:grid;place-items:center;position:relative;background:#262626;font-weight:600;font-size:13px}
+.zen-top i{position:absolute;right:10px;top:9px;width:16px;height:16px;border-radius:50%;background:#3584e4}
+.zen-st{padding:12px 14px 6px;font-size:12.5px;color:#cfcfcf}
+.zen ul{list-style:none;margin:0;padding:6px 14px 14px;display:grid;gap:2px}
+.zen li{padding:5px 8px;border-radius:5px;font-size:12.5px}
+.zen li.h{font-weight:700;background:#353535}
+.zen li.on{background:#3584e4;color:#fff}
+.w1 .body{padding:16px;display:grid;gap:10px}
+.w1 canvas{display:block;width:100%;aspect-ratio:16/9;border-radius:8px}
+.upd{position:absolute;right:0;top:-2%;width:min(92%,360px);padding:14px;border-radius:14px;background:#1d1e23;border:1px solid #34353c;box-shadow:0 30px 70px -20px #000;font-size:13.5px;opacity:0;transform:translateY(30px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+.upd.show{opacity:1;transform:none}
+.upd .t{display:flex;gap:10px;align-items:center}.upd .t .orb{width:22px}
+.upd .t b{font-weight:600}
+.upd .row{display:flex;gap:8px;margin-top:12px;align-items:center}
+.upd .bar{flex:1;height:6px;border-radius:9px;background:#2a2b31;overflow:hidden;position:relative}
+.upd .bar i{position:absolute;inset:0 auto 0 0;width:var(--w,0%);background:var(--acc)}
+.upd .msg{margin-top:8px;font:500 11.5px var(--mono);color:var(--dim);min-height:1.4em}
+.upd .msg.ok{color:#4ade80}
+@media (max-width:620px){.plat{height:52vh}.plat .w1{width:88%;top:18%}.plat .w2{width:70%;bottom:0}.upd{left:0;right:auto;top:0;width:100%}}
+
+/* ---------- Compare ---------- */
+.compare{position:relative;padding:120px var(--pad) 80px;max-width:1240px;margin:0 auto}
+.compare h2{margin:0 0 14px;font:800 clamp(34px,4.4vw,64px)/1 var(--sans);letter-spacing:-.04em}
+.compare>p{color:var(--muted);max-width:40em;margin:0 0 48px}
+.ram{display:grid;gap:14px;margin-bottom:28px}
+.rr{display:grid;grid-template-columns:200px 1fr 150px;gap:18px;align-items:center}
+.rr b{font-weight:600}.rr b small{display:block;font-weight:400;font-size:12.5px;color:var(--dim)}
+.rr .track{position:relative;height:30px;border-radius:9px;background:#18191d;overflow:hidden}
+.rr .fill{position:absolute;top:0;bottom:0;left:var(--from,0%);width:0;border-radius:9px;background:#3a3b43;transition:width 1.3s var(--ease)}
+.rr.us .fill{background:var(--acc);box-shadow:0 0 30px -4px var(--acc)}
+.rr.range .fill{background:repeating-linear-gradient(45deg,#4a4b55 0 8px,#3e3f48 8px 16px)}
+.rr .val{font:700 18px var(--sans);font-variant-numeric:tabular-nums;text-align:right}
+.rr .val small{display:block;font:400 11.5px var(--mono);color:var(--dim)}
+.ram.in .fill{width:var(--w)}
+.notes{font:400 12.5px/1.7 var(--mono);color:var(--dim);margin:0 0 70px;padding:0;list-style:none}
+.notes a{text-decoration:underline;text-decoration-color:#555}
+.chk{width:100%;border-collapse:separate;border-spacing:0;font-size:15px}
+.chk th,.chk td{padding:16px 12px;text-align:center;border-bottom:1px solid #222328}
+.chk th{font:600 13px var(--sans);color:var(--muted)}
+.chk th:first-child,.chk td:first-child{text-align:left;color:var(--text)}
+.chk th.us{color:var(--acc)}
+.chk td.us{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+.chk tr:first-child th.us{border-radius:12px 12px 0 0}
+.mk{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;transform:scale(0);transition:transform .5s cubic-bezier(.34,1.56,.64,1)}
+.mk.y{background:color-mix(in srgb,#4ade80 16%,transparent);color:#4ade80}
+.mk.n{background:#ef444418;color:#ef4444}
+.mk.q{background:#ffffff10;color:var(--dim);font:600 13px var(--mono)}
+td.us .mk.y{background:var(--acc);color:#160b07}
+.chk.in .mk{transform:scale(1)}
+.chk-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:760px){.rr{grid-template-columns:1fr 92px;gap:6px 12px}.rr .track{grid-column:1/-1;grid-row:2;height:18px}.chk{font-size:13px;min-width:600px}}
+
+/* ---------- Download ---------- */
+.dl{position:relative;min-height:100svh;display:grid;place-items:center;text-align:center;padding:120px var(--pad);overflow:hidden}
+.dl .big-orb{width:min(34vw,300px);margin:0 auto 40px;animation:float 6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-14px)}}
+.dl h2{margin:0;font:800 clamp(40px,6vw,96px)/.95 var(--sans);letter-spacing:-.045em}
+.dl p{color:var(--muted);margin:22px auto 34px;max-width:34em}
+.dl .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;max-width:880px;margin:0 auto}
+.dl .grid a{padding:18px;border-radius:14px;background:var(--surface);border:1px solid #2b2c32;text-align:left;transition:border-color .3s,transform .3s var(--ease)}
+.dl .grid a:hover{border-color:var(--acc);transform:translateY(-3px)}
+.dl .grid b{display:block;font-size:16px}.dl .grid span{font-size:13px;color:var(--muted)}
+.dl .halo{position:absolute;inset:0;background:radial-gradient(40% 40% at 50% 38%,color-mix(in srgb,var(--acc) 18%,transparent),transparent 70%);pointer-events:none}
+footer{padding:40px var(--pad);border-top:1px solid #1f2025;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;font-size:13px;color:var(--dim)}
+footer a{color:var(--muted)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body class="loading">
+
+<div id="loader" role="status" aria-label="Loading">
+  <div class="ld">
+    <div class="ld-stage">
+      <svg class="ld-ring" viewBox="0 0 180 180" aria-hidden="true"><circle class="tr" cx="90" cy="90" r="86"/><circle class="pr" cx="90" cy="90" r="86" id="ld-pr"/></svg>
+      <div class="ld-shadow"></div>
+      <div class="orb glow ld-orb" id="ld-orb"></div>
+    </div>
+    <div class="ld-word" aria-hidden="true"></div>
+    <div class="ld-pct" id="ld-pct">BUFFERING 0%</div>
+  </div>
+</div>
+
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="progress" id="progress"></div>
+<header class="top">
+  <a class="brand" href="#top"><span class="orb"></span>ZenithClipper</a>
+  <nav aria-label="Sections"><a href="#replay">Instant replay</a><a href="#editor">Editor</a><a href="#compare">Compare</a><a href="#download">Download</a></nav>
+  <a class="btn solid sm" href="#download">Download</a>
+</header>
+
+<main id="top">
+<section class="hero" data-orb="0.9,0.16,0.62,1">
+  <div class="orb hero-orb" aria-hidden="true"></div>
+  <div>
+    <div class="eyebrow"><i></i>Always rolling</div>
+    <h1>The last minute,<br>already <span class="acc">saved.</span></h1>
+    <p>ZenithClipper keeps the last minutes of your screen in the background. Press <b>Alt+C</b> and that moment is a clip. Then cut it in the editor that's built right in.</p>
+    <div class="ctas"><a class="btn solid" href="#download">Download free</a><a class="btn ghost" href="https://github.com/glitchthekillah/ZenithClipper" target="_blank" rel="noopener">View on GitHub</a></div>
+    <div class="meta">WINDOWS 10/11 · LINUX · NVIDIA · AMD · INTEL</div>
+  </div>
+  <div class="monitor"><canvas data-game="1.4" width="960" height="540" aria-label="A game playing while ZenithClipper records"></canvas><div class="rec"><i></i><span data-clock="69">1:09</span> buffered</div></div>
+</section>
+
+<!-- 1. Instant replay -->
+<section class="scene" id="replay" data-scene="replay" data-orb="0.56,0.13,0.12,.9">
+  <div class="stage">
+    <div class="copy">
+      <div class="eyebrow">01 · Instant replay</div>
+      <h2>Press a key.<br>Keep the moment.</h2>
+      <p>The recorder writes to a rolling buffer on disk, so it can hold hours of history without filling your RAM. Choose how far back to go, press Alt+C, and the clip is saved in about a fifth of a second.</p>
+      <ol class="steps" data-steps>
+        <li><b>01</b>It's always rolling</li>
+        <li><b>02</b>Pick how far back</li>
+        <li><b>03</b>Alt+C. Saved.</li>
+      </ol>
+    </div>
+    <div class="visual">
+      <div class="panel" id="rp-panel">
+        <div class="pn-head"><span class="orb"></span><b>ZenithClipper</b><span class="st"><i></i>Recording</span></div>
+        <div class="pn-body">
+          <div class="pn-row"><b>Instant replay</b><span class="tog">Record<i></i></span></div>
+          <div class="pn-big"><div><small><i></i>RECORDING</small><strong data-clock="69">1:09</strong><span>buffered of 1:00:00 history</span></div><div class="ring" id="rp-ring"><b data-mb>32 MB</b><span>of 2.0 GB</span></div></div>
+          <div class="chips"><span>NVENC NATIVE</span><span>2560×1600</span><span>Display fps</span><span>Audio on</span></div>
+          <div class="strip"><div class="seg" id="rp-seg"></div><div class="sel" id="rp-sel"></div><div class="now"></div></div>
+          <div class="strip-l"><span>−1:00:00</span><span>Now</span></div>
+          <div class="durs" id="rp-durs"><div class="pill"></div><span>15s</span><span>30s</span><span>1m</span><span>2m</span><span>5m</span><span>Custom</span></div>
+          <div class="save" id="rp-save"><span id="rp-save-t">Save last 15s</span><kbd>Alt+C</kbd></div>
+          <div class="tiles"><div><small>SAVED TODAY</small><b id="rp-saved">0</b><span id="rp-saved-s">No clips yet</span></div><div><small>RECORDER CPU</small><b>1.4%</b><span>of all cores</span></div><div><small>MEMORY</small><b>89 MB</b><span>engine + encoder</span></div></div>
+        </div>
+      </div>
+      <div class="keys" id="rp-keys" style="top:8%;right:4%"><span class="key" id="k-alt">Alt</span>+<span class="key" id="k-c">C</span></div>
+      <div class="toast" id="rp-toast" style="bottom:4%;left:0"><canvas data-game="1" width="172" height="97"></canvas><div><b>Clip saved · 2:00</b><span>Clip-2026-11-17-21-42.mp4</span></div><span class="ok">✓</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Lightweight -->
+<section class="scene" data-scene="light" data-orb="0.5,0.87,0.12,.9">
+  <div class="stage flip">
+    <div class="copy">
+      <div class="eyebrow">02 · Lightweight</div>
+      <h2>Light enough<br>to forget it's on.</h2>
+      <p>While recording a 2560×1600 desktop at 165 fps with NVENC, the recorder peaked at 89 MB of RAM and averaged 1.4% of the CPU. The editor only loads when you open it.</p>
+      <p class="fine">Peak resident memory (MiB) and average CPU of the whole machine, measured on a Ryzen 7 8845HS + RTX 4060 laptop, November 2026.</p>
+    </div>
+    <div class="visual">
+      <div class="meter">
+        <div class="mem"><strong id="lt-mb">0</strong><span>MB</span></div>
+        <div class="tm">
+          <div class="tm-h"><span>PROCESS</span><span>MEMORY</span><span>CPU</span></div>
+          <div class="tm-r"><b><span class="orb"></span>ZenithClipper</b><span class="bar" id="lt-bar"><i></i></span><span id="lt-cpu">1.4%</span></div>
+          <div class="tm-r" style="color:var(--dim)"><b style="color:var(--muted)">Clip editor</b><span>not loaded</span><span>0%</span></div>
+        </div>
+        <canvas class="spark" id="lt-spark" width="1120" height="220" aria-label="Live CPU graph hovering around one percent"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Encoding -->
+<section class="scene" data-scene="enc" data-orb="0.56,0.87,0.12,.85">
+  <div class="stage">
+    <div class="copy">
+      <div class="eyebrow">03 · Hardware encoding</div>
+      <h2>Your GPU does<br>the heavy lifting.</h2>
+      <p>Frames go straight to the video encoder on NVIDIA, AMD or Intel graphics. If the hardware encoder can't start, ZenithClipper tells you. It never quietly switches to CPU encoding behind your back; software encoding is there only if you pick it.</p>
+      <ol class="steps" data-steps>
+        <li><b>01</b>Capture on the GPU</li>
+        <li><b>02</b>Encode in hardware</li>
+        <li><b>03</b>Write segments to disk</li>
+      </ol>
+    </div>
+    <div class="visual">
+      <div class="pipe">
+        <div class="flow">
+          <div class="node"><canvas data-game="1.2" width="320" height="180"></canvas><b>Screen</b>2560×1600</div>
+          <span class="wire"></span>
+          <div class="node enc"><div class="chip-g"><i id="enc-name">NVENC</i></div><b>Encoder</b><span id="enc-sub">NVIDIA</span></div>
+          <span class="wire"></span>
+          <div class="node"><div class="disk" id="enc-disk"></div><b>Disk</b>rolling segments</div>
+        </div>
+        <div class="gpus" id="enc-gpus">
+          <div class="gpu"><b>NVIDIA</b>NVENC</div>
+          <div class="gpu"><b>AMD</b>AMF</div>
+          <div class="gpu"><b>Intel</b>Quick Sync</div>
+          <div class="gpu sw"><b>Software</b>only if you choose it</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Audio -->
+<section class="scene" data-scene="audio" data-orb="0.5,0.13,0.12,.85">
+  <div class="stage flip">
+    <div class="copy">
+      <div class="eyebrow">04 · Clip audio</div>
+      <h2>Choose what<br>your clips hear.</h2>
+      <p>Keep the game loud, turn Discord down, leave Spotify out completely. It only changes what goes into clips. What you hear stays exactly the same.</p>
+      <ol class="steps" data-steps>
+        <li><b>01</b>Every app on its own slider</li>
+        <li><b>02</b>Mute music out of clips</li>
+        <li><b>03</b>Turn voice chat down</li>
+      </ol>
+    </div>
+    <div class="visual">
+      <div class="mixer">
+        <div class="mx-h"><b>Clip audio</b><span>Only changes what clips hear</span></div>
+        <div class="mx-r" id="mx-0"><span class="ic" style="background:#2a475e">S</span><span>steam</span><canvas width="300" height="60"></canvas><span class="sl" style="--v:100%"><i></i><u></u></span><span class="v">100%</span></div>
+        <div class="mx-r" id="mx-1"><span class="ic" style="background:#1db954">S</span><span>Spotify</span><canvas width="300" height="60"></canvas><span class="sl" style="--v:100%"><i></i><u></u></span><span class="v">100%</span></div>
+        <div class="mx-r" id="mx-2"><span class="ic" style="background:#5865f2">D</span><span>Discord</span><canvas width="300" height="60"></canvas><span class="sl" style="--v:100%"><i></i><u></u></span><span class="v">100%</span></div>
+        <div class="mx-out"><small>WHAT THE CLIP HEARS</small><canvas id="mx-out" width="1000" height="112"></canvas></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. Editor -->
+<section class="scene tall" id="editor" data-scene="editor" data-orb="0.035,0.93,0.08,.8">
+  <div class="stage wide">
+    <div class="copy">
+      <div class="eyebrow">05 · The editor</div>
+      <h2>A real editor,<br>not a trim bar.</h2>
+      <p>Multiple video and audio tracks, titles, captions, effects with keyframes, speed, colour and undo for everything. Open any clip and finish it without leaving the app.</p>
+      <ol class="steps" data-steps>
+        <li><b>01</b>Drag clips onto the timeline</li>
+        <li><b>02</b>Split with Ctrl+K</li>
+        <li><b>03</b>Trim to the good part</li>
+        <li><b>04</b>Add a title and an effect</li>
+        <li><b>05</b>Export</li>
+      </ol>
+    </div>
+    <div class="visual">
+      <div class="win ed" id="ed">
+        <div class="win-top"><span class="orb"></span><b>ZenithClipper</b><span>Editor</span><span class="sp"><span>—</span><span>☐</span><span>✕</span></span></div>
+        <div class="ed-menu"><span>File</span><span>Edit</span><span>Sequence</span><span>Graphics</span><span>Captions</span><span>Window</span><span class="ex" id="ed-export">Export</span></div>
+        <div class="ed-main">
+          <div class="bin"><small>MEDIA</small>
+            <div class="it sel" id="bin-0"><canvas data-game="1" width="92" height="52"></canvas>overwatch.mp4</div>
+            <div class="it" id="bin-1"><canvas data-game="0.8" data-hue="40" width="92" height="52"></canvas>ace.mp4</div>
+            <div class="it" id="bin-2"><canvas data-wave width="92" height="52"></canvas>music.mp3</div>
+          </div>
+          <div class="prev"><canvas id="ed-prev" width="640" height="360"></canvas><div class="title-ov" id="ed-title">GG</div></div>
+          <div class="insp"><small>INSPECTOR</small>
+            <div class="f">Clip<b id="ed-name">overwatch.mp4</b></div>
+            <div class="f">Start<b id="ed-start">00:00.00</b></div>
+            <div class="f">Duration<b id="ed-dur">00:00.00</b></div>
+            <div class="f">Speed<b>1.00×</b></div>
+            <small>EFFECTS</small>
+            <div class="fx" id="fx-0"><i></i>Glow</div>
+            <div class="fx" id="fx-1"><i></i>Brightness</div>
+          </div>
+        </div>
+        <div class="tools"><span id="tool-sel" class="on">Select</span><span id="tool-split">Split</span><span id="tool-trim">Trim</span><span id="tool-title">Title</span><span style="margin-left:auto;font-family:var(--mono)" id="ed-tc">00:00:00.00</span></div>
+        <div class="tl" id="ed-tl">
+          <div class="ruler"></div>
+          <div class="trk"><b>Title</b><div class="lane" id="ln-t"></div></div>
+          <div class="trk"><b>Video 1</b><div class="lane" id="ln-v"></div></div>
+          <div class="trk"><b>Audio 1</b><div class="lane" id="ln-a"></div></div>
+          <div class="playhead" id="ed-ph" style="left:66px"></div>
+        </div>
+        <div class="dragghost" id="ed-ghost"><canvas data-game="0.8" data-hue="40" width="68" height="38"></canvas>ace.mp4</div>
+      </div>
+      <div class="keys ed-keys" id="ed-keys"><span class="key" id="k-ctrl">Ctrl</span>+<span class="key" id="k-k">K</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Formats -->
+<section class="scene" data-scene="fmt" data-orb="0.5,0.12,0.1,.9">
+  <div class="stage flip">
+    <div class="copy">
+      <div class="eyebrow">06 · Formats</div>
+      <h2>Bring anything.<br>Send it anywhere.</h2>
+      <p>Import video, audio, images and GIFs, even PSD files. Export MP4 in H.264, H.265 or AV1, MOV, MKV, WebM, animated GIF, or audio only as MP3, WAV, M4A or FLAC. Discord and YouTube presets are one click.</p>
+    </div>
+    <div class="visual">
+      <div class="fmt">
+        <div class="orbit" id="fmt-orbit"><div class="core"><div><i class="orb" style="display:block"></i>Import</div></div></div>
+        <div class="exp" id="fmt-exp">
+          <div><b>MP4 · H.264</b><span>video</span><i></i></div>
+          <div><b>MP4 · AV1</b><span>video</span><i></i></div>
+          <div><b>Animated GIF</b><span>480p</span><i></i></div>
+          <div><b>WebM · VP9</b><span>video</span><i></i></div>
+          <div><b>Discord preset</b><span>small file</span><i></i></div>
+          <div><b>Audio only · MP3</b><span>audio</span><i></i></div>
+          <div><b>Audio only · FLAC</b><span>lossless</span><i></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Appearance -->
+<section class="scene" data-scene="look" data-orb="0.5,0.87,0.13,1">
+  <div class="stage">
+    <div class="copy">
+      <div class="eyebrow">07 · Appearance</div>
+      <h2>Make it<br><span class="acc" id="lk-name">Ember</span>.</h2>
+      <p>Ten accent colours and four backgrounds. Pick one and the panel and the editor change together, live. This page is using it right now.</p>
+    </div>
+    <div class="visual">
+      <div class="look">
+        <div class="sw" id="lk-sw"></div>
+        <div class="tones" id="lk-tones"><span>Graphite</span><span>Midnight</span><span>Slate</span><span>Black</span></div>
+        <div class="look-pair">
+          <div class="panel"><div class="pn-head"><span class="orb"></span><b>ZenithClipper</b><span class="st"><i></i>Recording</span></div>
+            <div class="pn-body"><div class="pn-big" style="margin-top:0"><div><small><i></i>RECORDING</small><strong data-clock="69">1:09</strong></div><div class="ring" style="--fill:16%"><b>32 MB</b><span>of 2.0 GB</span></div></div>
+            <div class="save"><span>Save last 2m</span><kbd>Alt+C</kbd></div></div></div>
+          <div class="mini-ed" id="lk-ed"><div class="bar"><span class="orb"></span>Editor<em>Export</em></div><canvas data-game="1" width="480" height="240"></canvas><div class="lanes"><i style="--w:78%"></i><i style="--w:62%"></i></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. Platforms + updates -->
+<section class="scene" data-scene="plat" data-orb="0.5,0.12,0.12,.85">
+  <div class="stage flip">
+    <div class="copy">
+      <div class="eyebrow">08 · Windows and Linux</div>
+      <h2>Same app.<br>Both systems.</h2>
+      <p>A per-user installer or a portable zip on Windows. An AppImage, a .deb or a tarball on Linux. When a new version is out, you get one notification and an Update now button; the download is checked against its published SHA256 before it installs.</p>
+      <ol class="steps" data-steps>
+        <li><b>01</b>Windows 10 and 11</li>
+        <li><b>02</b>Linux (X11, Wayland experimental)</li>
+        <li><b>03</b>Updates itself, verified</li>
+      </ol>
+    </div>
+    <div class="visual">
+      <div class="plat">
+        <div class="win w1"><div class="win-top"><span class="orb"></span><b>ZenithClipper</b><span class="sp"><span>—</span><span>☐</span><span>✕</span></span></div><div class="body"><canvas data-game="1.1" width="480" height="270"></canvas></div></div>
+        <div class="zen w2"><div class="zen-top">ZenithClipper controls<i></i></div><div class="zen-st">Capturing · <span data-clock="69">1:09</span> buffered</div>
+          <ul id="pl-list"><li class="h">Action</li><li>Save clip</li><li>Pause capture</li><li>Settings</li><li>Keyboard shortcuts</li><li>Check for updates</li><li>Open editor</li></ul></div>
+        <div class="upd" id="pl-upd"><div class="t"><span class="orb"></span><div><b>ZenithClipper 1.0.2 is available.</b></div></div>
+          <div class="row"><span class="btn solid sm" style="padding:6px 12px;font-size:13px">Update now</span><span class="bar"><i id="pl-bar"></i></span></div>
+          <div class="msg" id="pl-msg"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Compare -->
+<section class="compare" id="compare" data-orb="0.96,0.08,0.1,.6">
+  <div class="eyebrow">09 · Compare</div>
+  <h2>Less memory.<br>More of what you need.</h2>
+  <p>RAM while recording, from our own test and from the best figures other apps or testers have published. Lower is better.</p>
+  <div class="ram" id="ram">
+    <div class="rr us" style="--w:10.5%"><b>ZenithClipper<small>measured, recording 1440p+ @ 165 fps</small></b><span class="track"><span class="fill"></span></span><span class="val">89 MB<small>[1]</small></span></div>
+    <div class="rr range" style="--from:11.8%;--w:35.3%"><b>Medal<small>Medal's own figure</small></b><span class="track"><span class="fill"></span></span><span class="val">100–400 MB<small>[2]</small></span></div>
+    <div class="rr range" style="--from:41.2%;--w:17.6%"><b>OBS replay buffer<small>before the buffer, which lives in RAM</small></b><span class="track"><span class="fill"></span></span><span class="val">350–500 MB<small>+ buffer [3]</small></span></div>
+    <div class="rr" style="--w:62.8%"><b>NVIDIA App<small>overlay processes, same laptop</small></b><span class="track"><span class="fill"></span></span><span class="val">534 MB<small>[4]</small></span></div>
+    <div class="rr"><b>SteelSeries Moments<small>no published figure</small></b><span class="track"><span class="fill"></span></span><span class="val">–<small>[5]</small></span></div>
+  </div>
+  <ol class="notes">
+    <li>[1] Peak resident memory of the recorder, final installed build, 2560×1600 at 165 fps, NVENC, Nov 2026. Raw data in <a href="https://github.com/glitchthekillah/ZenithClipper/blob/main/BENCHMARKS.md">BENCHMARKS.md</a>.</li>
+    <li>[2] "100 to 400MB of RAM while recording", <a href="https://medal.tv/compare/medal-vs-obs" rel="noopener">medal.tv</a>. No test setup given.</li>
+    <li>[3] OBS base usage and RAM-held replay buffer, <a href="https://weaverclip.video/tools/obs-replay-buffer-calculator" rel="noopener">WeaverClip replay buffer calculator</a>.</li>
+    <li>[4] Working set of the NVIDIA Overlay and ShadowPlay helper processes on the same laptop, Nov 17 2026. Driver services not counted.</li>
+    <li>[5] <a href="https://steelseries.com/gg/moments" rel="noopener">SteelSeries</a> doesn't publish a memory figure, and we didn't find a reliable test.</li>
+  </ol>
+
+  <div class="chk-wrap">
+  <table class="chk" id="chk">
+    <thead><tr><th></th><th class="us">ZenithClipper</th><th>Medal</th><th>NVIDIA App</th><th>OBS</th><th>SteelSeries Moments</th></tr></thead>
+    <tbody>
+      <tr><td>Windows and Linux</td><td class="us" data-v="y"></td><td data-v="n"></td><td data-v="n"></td><td data-v="y"></td><td data-v="n"></td></tr>
+      <tr><td>Works with NVIDIA, AMD and Intel GPUs</td><td class="us" data-v="y"></td><td data-v="y"></td><td data-v="n"></td><td data-v="y"></td><td data-v="y"></td></tr>
+      <tr><td>Built-in clip editor</td><td class="us" data-v="y"></td><td data-v="y"></td><td data-v="n"></td><td data-v="n"></td><td data-v="y"></td></tr>
+      <tr><td>No account needed to clip</td><td class="us" data-v="y"></td><td data-v="n"></td><td data-v="y"></td><td data-v="y"></td><td data-v="y"></td></tr>
+      <tr><td>Under 100 MB of RAM while recording</td><td class="us" data-v="y"></td><td data-v="n"></td><td data-v="n"></td><td data-v="n"></td><td data-v="q"></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="notes" style="margin:18px 0 0">Based on each product's own pages as of November 2026 and the figures above. "?" means no published figure.</p>
+</section>
+
+<section class="dl" id="download" data-orb="0.5,0.27,0.34,1">
+  <div class="halo"></div>
+  <div style="position:relative">
+    <div class="orb glow big-orb" aria-hidden="true"></div>
+    <h2>Never miss<br>the moment again.</h2>
+    <p>Free download. Every file is listed with its SHA256 checksum on the release page.</p>
+    <div class="grid">
+      <a href="https://github.com/glitchthekillah/ZenithClipper/releases/latest" rel="noopener"><b>Windows installer</b><span>Recommended · no admin prompt</span></a>
+      <a href="https://github.com/glitchthekillah/ZenithClipper/releases/latest" rel="noopener"><b>Windows portable</b><span>Unzip and run</span></a>
+      <a href="https://github.com/glitchthekillah/ZenithClipper/releases/latest" rel="noopener"><b>Linux AppImage</b><span>Any modern x86_64 distro</span></a>
+      <a href="https://github.com/glitchthekillah/ZenithClipper/releases/latest" rel="noopener"><b>Linux .deb</b><span>Ubuntu, Debian, Mint</span></a>
+    </div>
+  </div>
+</section>
+</main>
+<footer><span>ZenithClipper · made by <a href="https://glitchthekillah.com">glitch</a></span><span><a href="https://github.com/glitchthekillah/ZenithClipper">GitHub</a> · <a href="https://github.com/glitchthekillah/ZenithClipper/releases">Releases</a></span></footer>
+
+<script>
+(() => {
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const seg = (p, a, b) => clamp((p - a) / (b - a));
+const ease = (x) => 1 - Math.pow(1 - x, 3);
+const fmt = (s) => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
+
+/* ---------- Loader: the orb drops in, the ring fills as the page loads ---------- */
+const word = $('.ld-word'); [...'ZenithClipper'].forEach((ch, i) => { const s = document.createElement('span'); s.textContent = ch; s.style.animationDelay = (0.55 + i * 0.035) + 's'; word.appendChild(s); });
+const pr = $('#ld-pr'), pct = $('#ld-pct'); let shown = 0, target = 0.15; const t0 = performance.now();
+setTimeout(() => $('#ld-orb').classList.add('pulse'), 1150);
+Promise.all([document.fonts ? document.fonts.ready.then(() => target = Math.max(target, .7)) : 0, new Promise((r) => addEventListener('load', r))]).then(() => target = 1);
+setTimeout(() => target = 1, 4000);
+(function lt() {
+  const minDone = performance.now() - t0 > (reduce ? 200 : 1500);
+  shown += ((minDone ? target : Math.min(target, .9)) - shown) * .08; if (target === 1 && minDone && shown > .985) shown = 1;
+  pr.style.strokeDashoffset = 540 * (1 - shown); pct.textContent = 'BUFFERING ' + Math.round(shown * 100) + '%';
+  if (shown < 1) requestAnimationFrame(lt); else setTimeout(() => { $('#loader').classList.add('done'); document.body.classList.remove('loading'); }, 260);
+})();
+
+/* ---------- A tiny procedural "game" drawn into every screen on the page ---------- */
+const games = $$('canvas[data-game]').map((c) => ({ c, x: c.getContext('2d'), sp: +c.dataset.game || 1, hue: +(c.dataset.hue || 0), vis: false }));
+function drawGame(g, t) {
+  const { c, x } = g, w = c.width, h = c.height, T = t * g.sp, hz = h * .56;
+  const sky = x.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, `hsl(${262 + g.hue} 60% 9%)`); sky.addColorStop(1, `hsl(${300 + g.hue} 55% 28%)`);
+  x.fillStyle = sky; x.fillRect(0, 0, w, hz);
+  const sr = h * .2, sx = w * .5 + Math.sin(T * .2) * w * .04, sy = hz - sr * .35;
+  const sun = x.createLinearGradient(0, sy - sr, 0, sy + sr); sun.addColorStop(0, `hsl(${45 + g.hue} 100% 65%)`); sun.addColorStop(1, `hsl(${8 + g.hue} 95% 58%)`);
+  x.fillStyle = sun; x.beginPath(); x.arc(sx, sy, sr, 0, Math.PI * 2); x.fill();
+  x.fillStyle = `hsl(${280 + g.hue} 55% 18%)`; for (let i = 0; i < 6; i++) { const yy = sy + sr * (.15 + i * .16) - ((T * 8) % (sr * .16)); x.fillRect(sx - sr, yy, sr * 2, Math.max(1, sr * .05 * (i + 1) * .5)); }
+  x.fillStyle = `hsl(${270 + g.hue} 45% 12%)`; x.beginPath(); x.moveTo(0, hz);
+  for (let i = 0; i <= 24; i++) { const px = i / 24 * w; x.lineTo(px, hz - (Math.sin(i * 1.7 + 2) * .5 + .5) * h * .1 - (i % 3) * h * .02); } x.lineTo(w, hz); x.fill();
+  const gr = x.createLinearGradient(0, hz, 0, h); gr.addColorStop(0, `hsl(${290 + g.hue} 70% 14%)`); gr.addColorStop(1, `hsl(${255 + g.hue} 60% 5%)`);
+  x.fillStyle = gr; x.fillRect(0, hz, w, h - hz);
+  x.strokeStyle = `hsl(${320 + g.hue} 100% 62% / .75)`; x.lineWidth = Math.max(1, w / 500);
+  x.beginPath(); for (let i = -12; i <= 12; i++) { x.moveTo(w / 2 + i * w * .02, hz); x.lineTo(w / 2 + i * w * .16, h); }
+  for (let i = 0; i < 12; i++) { const z = ((i + (T * 1.2) % 1) / 12); const y = hz + (h - hz) * z * z; x.moveTo(0, y); x.lineTo(w, y); } x.stroke();
+  const carX = w / 2 + Math.sin(T * .9) * w * .09, carY = h * .84, cw = w * .12;
+  x.fillStyle = '#0c0a14'; x.beginPath(); x.moveTo(carX - cw / 2, carY); x.lineTo(carX - cw * .38, carY - cw * .2); x.lineTo(carX + cw * .38, carY - cw * .2); x.lineTo(carX + cw / 2, carY); x.closePath(); x.fill();
+  x.fillStyle = `hsl(${0 + g.hue} 95% 60%)`; x.fillRect(carX - cw * .42, carY - cw * .1, cw * .14, cw * .05); x.fillRect(carX + cw * .28, carY - cw * .1, cw * .14, cw * .05);
+}
+const waves = $$('canvas[data-wave]').map((c) => ({ c, x: c.getContext('2d') }));
+const io = new IntersectionObserver((es) => es.forEach((e) => { const g = games.find((g) => g.c === e.target); if (g) g.vis = e.isIntersecting; }), { rootMargin: '100px' });
+games.forEach((g) => io.observe(g.c));
+
+/* ---------- Clocks that keep counting, like the real buffer ---------- */
+const clocks = $$('[data-clock]'); const clockStart = performance.now();
+function tickClocks() { const s = 69 + (performance.now() - clockStart) / 1000; clocks.forEach((c) => c.textContent = fmt(Math.min(s, 3600))); }
+setInterval(tickClocks, 250);
+
+/* ---------- Scroll scenes ---------- */
+const scenes = $$('[data-scene]').map((el) => ({ el, name: el.dataset.scene, steps: $$('[data-steps] li', el) }));
+const sceneP = (el) => { const r = el.getBoundingClientRect(); return clamp(-r.top / Math.max(1, r.height - innerHeight)); };
+const setSteps = (s, p) => { const n = s.steps.length; s.steps.forEach((li, i) => li.classList.toggle('on', Math.min(n - 1, Math.floor(p * n * 1.0001)) === i)); };
+
+// 1. Replay
+const durs = $('#rp-durs'), pill = $('.pill', durs), durNames = ['15s', '30s', '1m', '2m', '5m', 'Custom'], durW = [0.4, 0.8, 1.7, 3.3, 8.3];
+let saved = false;
+function replay(p) {
+  const pick = Math.round(clamp(seg(p, .3, .58)) * 3);
+  pill.style.transform = `translateX(${pick * 100}%)`; $$('span', durs).forEach((s, i) => s.classList.toggle('on', i === pick));
+  $('#rp-save-t').textContent = 'Save last ' + durNames[pick]; $('#rp-sel').style.setProperty('--sel', durW[pick] * 2.4 + '%');
+  const press = p > .64 && p < .74, after = p >= .7;
+  $('#rp-keys').classList.toggle('show', p > .58 && p < .9);
+  $('#k-alt').classList.toggle('down', press || (p >= .64 && p < .78)); $('#k-c').classList.toggle('down', press);
+  $('#rp-save').classList.toggle('press', press);
+  $('#rp-toast').classList.toggle('show', after);
+  $('#rp-saved').textContent = after ? '1' : '0'; $('#rp-saved-s').textContent = after ? 'Last: just now' : 'No clips yet';
+  $('#rp-ring').style.setProperty('--fill', (2 + p * 14) + '%'); $('[data-mb]').textContent = Math.round(32 + p * 260) + ' MB';
+}
+// 2. Light
+const ltMb = $('#lt-mb'), ltBar = $('#lt-bar');
+function light(p) { const v = ease(seg(p, .05, .5)); ltMb.textContent = Math.round(v * 89); ltBar.style.setProperty('--w', v * 17 + '%'); }
+// 3. Encoder
+const encs = [['NVENC', 'NVIDIA'], ['AMF', 'AMD'], ['QSV', 'Intel']]; const disk = $('#enc-disk'); for (let i = 0; i < 24; i++) disk.appendChild(document.createElement('i'));
+function enc(p) { const k = Math.min(2, Math.floor(seg(p, .1, .9) * 3)); $('#enc-name').textContent = encs[k][0]; $('#enc-sub').textContent = encs[k][1]; $$('.gpu', $('#enc-gpus')).forEach((g, i) => g.classList.toggle('on', i === k)); }
+// 4. Audio
+const mx = [0, 1, 2].map((i) => $('#mx-' + i));
+function setSlider(row, v, off) { const sl = $('.sl', row); sl.style.setProperty('--v', v + '%'); $('.v', row).textContent = off ? 'Off' : Math.round(v) + '%'; row.classList.toggle('off', off); row.dataset.level = off ? 0 : v / 100; }
+function audio(p) { const sp = ease(seg(p, .3, .55)), dc = ease(seg(p, .62, .88)); setSlider(mx[0], 100, false); setSlider(mx[1], 100 - sp * 50, sp >= 1); setSlider(mx[2], 100 - dc * 60, false); }
+// 5. Editor
+const lnV = $('#ln-v'), lnA = $('#ln-a'), lnT = $('#ln-t'), ph = $('#ed-ph'), ghost = $('#ed-ghost');
+const mk = (cls, txt) => { const d = document.createElement('div'); d.className = 'clip ' + cls; d.innerHTML = `<span style="position:relative">${txt}</span><span class="edge r"></span>`; return d; };
+const cA = mk('v', 'overwatch.mp4'), cA2 = mk('v', 'overwatch.mp4'), cB = mk('v', 'ace.mp4'), cAu = mk('a', ''), cT = mk('t', 'Title · GG');
+const auCv = document.createElement('canvas'); auCv.width = 600; auCv.height = 60; cAu.prepend(auCv);
+[cA, cA2, cB].forEach((c) => lnV.appendChild(c)); lnA.appendChild(cAu); lnT.appendChild(cT);
+const cutLine = document.createElement('div'); cutLine.className = 'cut'; lnV.appendChild(cutLine);
+const pos = (el, l, w) => { el.style.left = l + '%'; el.style.width = Math.max(0, w) + '%'; };
+function editor(p, s) {
+  const lane = lnV.getBoundingClientRect(), tl = $('#ed-tl').getBoundingClientRect(), ed = $('#ed').getBoundingClientRect(), bin = $('#bin-1').getBoundingClientRect();
+  // step 1: overwatch is on the timeline, ace.mp4 is dragged after it
+  const d = ease(seg(p, .04, .2)), placed = p >= .2;
+  const endA = 46;
+  ghost.style.opacity = p > .03 && !placed ? 1 : 0;
+  const gx0 = bin.left - ed.left, gy0 = bin.top - ed.top, gx1 = lane.left - ed.left + lane.width * endA / 100, gy1 = lane.top - ed.top;
+  ghost.style.transform = `translate(${gx0 + (gx1 - gx0) * d}px,${gy0 + (gy1 - gy0) * d - Math.sin(d * Math.PI) * 40}px)`;
+  $('#bin-1').classList.toggle('sel', p > .03 && p < .2); $('#bin-0').classList.toggle('sel', !(p > .03 && p < .2));
+  cB.style.display = placed ? '' : 'none'; pos(cB, endA, 30);
+  // step 2: split at the playhead with Ctrl+K
+  const phPct = 8 + ease(seg(p, .22, .36)) * 14;
+  const split = p >= .44;
+  $('#ed-keys').classList.toggle('show', p > .36 && p < .54);
+  $('#k-ctrl').classList.toggle('down', p > .4 && p < .5); $('#k-k').classList.toggle('down', p > .43 && p < .48);
+  $('#tool-split').classList.toggle('on', p > .36 && p < .54);
+  cutLine.style.left = phPct + '%'; cutLine.style.opacity = p > .43 && p < .52 ? 1 : 0;
+  // step 3: trim the first half away, ripple left
+  const tr = ease(seg(p, .54, .7)); $('#tool-trim').classList.toggle('on', p > .54 && p < .72);
+  if (!split) { pos(cA, 0, endA); cA2.style.display = 'none'; cA.style.display = ''; }
+  else { cA2.style.display = ''; pos(cA, 0, phPct * (1 - tr)); cA.style.opacity = 1 - tr; pos(cA2, phPct * (1 - tr), endA - phPct); cA2.classList.toggle('sel', p < .72); cA2.classList.toggle('trim', p > .54 && p < .7); }
+  const shift = split ? phPct * tr : 0; if (placed) pos(cB, endA - shift, 30);
+  pos(cAu, 0, (placed ? 76 : endA) - shift);
+  // step 4: title + glow
+  const ti = ease(seg(p, .72, .84)); cT.style.display = p > .72 ? '' : 'none'; pos(cT, 10, 24 * ti);
+  $('#tool-title').classList.toggle('on', p > .72 && p < .86); $('#tool-sel').classList.toggle('on', p <= .36 || p >= .86);
+  $('#fx-0').classList.toggle('on', p > .8); $('#fx-1').classList.toggle('on', p > .84);
+  // playhead: scrubs, then plays through the edit
+  const play = seg(p, .78, 1), phAt = p < .72 ? phPct * (p < .54 ? 1 : 1 - tr) : 0 + play * 70;
+  ph.style.left = `calc(66px + (100% - 66px) * ${phAt / 100})`;
+  const tlTitle = $('#ed-title'), on = p > .74 && phAt >= 10 && phAt <= 34; tlTitle.style.setProperty('--to', on ? 1 : 0); tlTitle.style.setProperty('--ts', on ? 1 : .6);
+  edState.glow = p > .8; edState.hue = phAt > endA - shift ? 40 : 0;
+  $('#ed-export').style.boxShadow = p > .95 ? '0 0 0 3px color-mix(in srgb,var(--acc) 40%,transparent)' : 'none';
+  $('#ed-tc').textContent = '00:00:' + String(Math.floor(phAt / 100 * 60)).padStart(2, '0') + '.' + String(Math.floor(phAt * 37) % 100).padStart(2, '0');
+  $('#ed-name').textContent = p > .03 && p < .36 && p > .2 ? 'ace.mp4' : 'overwatch.mp4';
+  $('#ed-start').textContent = split && tr > 0 ? '00:00.00' : '00:00.00'; $('#ed-dur').textContent = '00:' + String(Math.round((endA - (split ? phPct * tr : 0)) / 100 * 60)).padStart(2, '0') + '.00';
+}
+const edState = { glow: false, hue: 0 }; const edPrev = { c: $('#ed-prev'), x: $('#ed-prev').getContext('2d'), sp: 1, hue: 0 };
+// 6. Formats
+const orbit = $('#fmt-orbit'); const fmts = [['MP4', 'v'], ['MOV', 'v'], ['MKV', 'v'], ['WebM', 'v'], ['AVI', 'v'], ['MP3', 'a'], ['WAV', 'a'], ['FLAC', 'a'], ['OGG', 'a'], ['PNG', 'i'], ['JPG', 'i'], ['GIF', 'i'], ['WebP', 'i'], ['PSD', 'i']];
+const fEls = fmts.map(([n, k]) => { const s = document.createElement('span'); s.textContent = n; s.className = 'k-' + k; s.className += ' f'; orbit.appendChild(s); return s; });
+let fmtP = 0; const expRows = $$('#fmt-exp > div');
+function fmt6(p) { fmtP = p; expRows.forEach((r, i) => { const a = .25 + i * .09; r.style.setProperty('--w', ease(seg(p, a, a + .12)) * 100 + '%'); }); }
+// 7. Look
+const presets = [['Ember', '#FF6B4A'], ['Crimson', '#F0485A'], ['Amber', '#F5A524'], ['Lime', '#8BD346'], ['Mint', '#3ECF8E'], ['Cyan', '#2BC4E8'], ['Azure', '#4A8BFF'], ['Violet', '#9B7BFF'], ['Pink', '#FF5FA2'], ['Silver', '#C9CCD3']];
+const tones = [['Graphite', '#16171b'], ['Midnight', '#13161f'], ['Slate', '#1f2127'], ['Black', '#0b0b0d']];
+const sw = $('#lk-sw'); presets.forEach(([n, c]) => { const i = document.createElement('i'); i.style.setProperty('--c', c); i.title = n; sw.appendChild(i); });
+let accIdx = 0;
+function look(p, s, inside) {
+  const k = inside ? Math.min(9, Math.floor(seg(p, .08, .92) * 10)) : 0, tn = inside ? Math.min(3, Math.floor(seg(p, .1, .9) * 4)) : 0;
+  if (k !== accIdx) { accIdx = k; document.documentElement.style.setProperty('--acc', presets[k][1]); }
+  $$('i', sw).forEach((e, i) => e.classList.toggle('on', i === k)); $('#lk-name').textContent = presets[k][0];
+  $$('span', $('#lk-tones')).forEach((e, i) => e.classList.toggle('on', i === tn)); $('#lk-ed').style.setProperty('--tone', tones[tn][1]);
+}
+// 8. Platforms
+function plat(p) {
+  const show = p > .5; $('#pl-upd').classList.toggle('show', show);
+  const li = $$('#pl-list li'); li.forEach((e, i) => e.classList.toggle('on', i === (p < .5 ? 1 + Math.floor(seg(p, .05, .45) * 4.99) : 5)));
+  const dl = seg(p, .62, .86); $('#pl-bar').style.setProperty('--w', dl * 100 + '%');
+  const m = $('#pl-msg'); m.className = 'msg' + (p > .88 ? ' ok' : '');
+  m.textContent = p <= .6 ? '' : p <= .86 ? 'Downloading… ' + Math.round(dl * 100) + '%' : p <= .88 ? 'Checking SHA256…' : '✓ Verified against SHA256SUMS. Restarting…';
+}
+const fns = { replay, light, enc, audio, editor, fmt: fmt6, look, plat };
+
+/* ---------- Comparison reveals ---------- */
+$$('#chk td[data-v]').forEach((td, i) => { const v = td.dataset.v; td.innerHTML = `<span class="mk ${v}" style="transition-delay:${(i % 6) * 70 + Math.floor(i / 6) * 120}ms" aria-label="${v === 'y' ? 'Yes' : v === 'n' ? 'No' : 'Not published'}">${v === 'y' ? '✓' : v === 'n' ? '✕' : '?'}</span>`; });
+const rio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); rio.unobserve(e.target); } }), { threshold: .35 });
+rio.observe($('#ram')); rio.observe($('#chk'));
+
+/* ---------- Main loop ---------- */
+const spark = $('#lt-spark'), sx = spark.getContext('2d'), cpu = Array.from({ length: 90 }, () => 1.3);
+const outCv = $('#mx-out'), ox = outCv.getContext('2d');
+const prog = $('#progress');
+let last = 0, cpuT = 0;
+function loop(now) {
+  const t = now / 1000;
+  prog.style.transform = `scaleX(${clamp(scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight))})`;
+  let lookInside = false;
+  for (const s of scenes) {
+    const r = s.el.getBoundingClientRect(); const near = r.bottom > -innerHeight && r.top < innerHeight * 2;
+    const p = sceneP(s.el);
+    if (s.name === 'look') { lookInside = r.top < innerHeight * .5 && r.bottom > innerHeight * .5; fns.look(p, s, lookInside); continue; }
+    if (!near) continue;
+    fns[s.name](p, s); setSteps(s, p);
+  }
+  if (!lookInside && accIdx !== 0) { accIdx = 0; document.documentElement.style.removeProperty('--acc'); }
+  const anim = !reduce;
+  const tt = anim ? t : 2;
+  for (const g of games) if (g.vis) drawGame(g, tt);
+  // editor preview: same game, title glow handled in CSS, effect tint when glow is on
+  if (edPrev.c.getBoundingClientRect().bottom > 0 && edPrev.c.getBoundingClientRect().top < innerHeight) {
+    edPrev.hue = edState.hue; drawGame(edPrev, tt);
+    if (edState.glow) { edPrev.x.fillStyle = 'rgba(255,170,120,.14)'; edPrev.x.fillRect(0, 0, 640, 360); }
+  }
+  for (const w of waves) { const { c, x } = w; x.clearRect(0, 0, c.width, c.height); x.fillStyle = '#2f7d6c'; for (let i = 0; i < 23; i++) { const a = (Math.sin(i * .9 + tt * 4) * .5 + .5) * .7 + .15; x.fillRect(i * 4, c.height / 2 - a * c.height / 2, 3, a * c.height); } }
+  // audio clip waveform on the timeline
+  { const x = auCv.getContext('2d'); x.clearRect(0, 0, 600, 60); x.fillStyle = '#7fe0c6'; for (let i = 0; i < 150; i++) { const a = Math.abs(Math.sin(i * .37) * Math.sin(i * .11 + 1)) * .8 + .1; x.fillRect(i * 4, 30 - a * 26, 2, a * 52); } }
+  // mixer: live waveforms; muted apps flatline, output is the mix of what clips hear
+  const mixVis = outCv.getBoundingClientRect(); if (mixVis.bottom > 0 && mixVis.top < innerHeight) {
+    const lv = mx.map((r) => +(r.dataset.level ?? 1));
+    mx.forEach((row, k) => { const c = $('canvas', row), x = c.getContext('2d'); x.clearRect(0, 0, 300, 60); x.fillStyle = k === 0 ? '#c9cad0' : k === 1 ? '#1db954' : '#8b95ff';
+      for (let i = 0; i < 60; i++) { const a = lv[k] * (Math.abs(Math.sin(i * (.4 + k * .2) + tt * (3 + k))) * .7 + .1) * (k === 2 ? (Math.sin(tt * 1.3 + i * .05) > -.2 ? 1 : .1) : 1); x.fillRect(i * 5, 30 - a * 28, 3, Math.max(1, a * 56)); } });
+    ox.clearRect(0, 0, 1000, 112); ox.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--acc').trim() || '#ff6b4a'; ox.lineWidth = 2.5; ox.beginPath();
+    for (let i = 0; i <= 200; i++) { const v = Math.sin(i * .4 + tt * 3) * .5 * lv[0] + Math.sin(i * .6 + tt * 4) * .35 * lv[1] + Math.sin(i * .8 + tt * 5) * .3 * lv[2] * (Math.sin(tt * 1.3 + i * .01) > -.2 ? 1 : .1); const y = 56 - v * 40; i ? ox.lineTo(i * 5, y) : ox.moveTo(0, y); } ox.stroke();
+  }
+  // CPU sparkline
+  if (now - cpuT > 120 && anim) { cpuT = now; cpu.shift(); cpu.push(clamp(1.35 + (Math.random() - .5) * .5 + Math.sin(t) * .15, .6, 2.4)); $('#lt-cpu').textContent = cpu[cpu.length - 1].toFixed(1) + '%'; }
+  { const w = spark.width, h = spark.height; sx.clearRect(0, 0, w, h); sx.strokeStyle = '#ffffff10'; sx.lineWidth = 1; for (let i = 1; i < 4; i++) { sx.beginPath(); sx.moveTo(0, h * i / 4); sx.lineTo(w, h * i / 4); sx.stroke(); }
+    const acc = getComputedStyle(document.documentElement).getPropertyValue('--acc').trim() || '#ff6b4a';
+    sx.beginPath(); cpu.forEach((v, i) => { const x = i / (cpu.length - 1) * w, y = h - v / 4 * h; i ? sx.lineTo(x, y) : sx.moveTo(x, y); }); sx.strokeStyle = acc; sx.lineWidth = 3; sx.stroke();
+    sx.lineTo(w, h); sx.lineTo(0, h); sx.closePath(); const gf = sx.createLinearGradient(0, 0, 0, h); gf.addColorStop(0, acc + '55'); gf.addColorStop(1, acc + '00'); sx.fillStyle = gf; sx.fill();
+    sx.fillStyle = '#9a9ca4'; sx.font = '500 22px JetBrains Mono, monospace'; sx.fillText('CPU · 4% scale', 16, 32); }
+  // encoder disk: segments fill and roll
+  { const cells = disk.children, n = cells.length, k = Math.floor(t * 4) % (n + 6); for (let i = 0; i < n; i++) cells[i].classList.toggle('on', anim ? i < k : true); }
+  // import formats orbit
+  { const R = orbit.clientWidth * .42; fEls.forEach((e, i) => { const a = i / fEls.length * Math.PI * 2 + (anim ? t * .25 : 0) + fmtP * 2; const rr = R * (i % 2 ? .78 : 1); e.style.transform = `translate(calc(-50% + ${Math.cos(a) * rr}px),calc(-50% + ${Math.sin(a) * rr}px))`; }); }
+  // replay strip rolls
+  $('#rp-seg').style.transform = `translateX(${-(anim ? (t * 6) % 8 : 0)}%)`;
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+// The brand orb in real 3D: a clear-coated sphere lit by a studio environment that travels with the scroll
+// through a stream of "buffered frames". If WebGL or the CDN isn't available, the CSS orbs stay.
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canvas = document.getElementById('gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .9;
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(32, 1, .1, 100); cam.position.set(0, 0, 10);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), .04).texture; scene.environmentIntensity = .55;
+
+const accent = () => getComputedStyle(document.documentElement).getPropertyValue('--acc').trim() || '#ff6b4a';
+const col = new THREE.Color(accent()), want = new THREE.Color();
+const mat = new THREE.MeshPhysicalMaterial({ color: col, roughness: .38, metalness: 0, clearcoat: 1, clearcoatRoughness: .06 });
+const orb = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), mat); scene.add(orb);
+const rim = new THREE.Mesh(new THREE.SphereGeometry(1.035, 64, 48), new THREE.MeshBasicMaterial({ color: '#3a3d44', side: THREE.BackSide })); orb.add(rim);
+const key = new THREE.DirectionalLight('#ffffff', 2.2); key.position.set(-3, 4, 5); scene.add(key);
+const fill = new THREE.PointLight(col, 18, 30); fill.position.set(3, -2, 3); scene.add(fill);
+
+// frames streaming toward the camera, like the rolling buffer
+const N = reduce ? 0 : 520;
+const frames = new THREE.InstancedMesh(new THREE.PlaneGeometry(.12, .0675), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0, depthWrite: false }), Math.max(1, N));
+frames.count = N;
+const seeds = Array.from({ length: N }, () => ({ x: (Math.random() - .5) * 26, y: (Math.random() - .5) * 15, z: Math.random() * 40, s: .5 + Math.random() * 1.6, r: Math.random() * Math.PI }));
+scene.add(frames);
+const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3(), zAxis = new THREE.Vector3(0, 0, 1);
+
+const targets = [...document.querySelectorAll('[data-orb]')].map((el) => ({ el, v: el.dataset.orb.split(',').map(Number) }));
+const cur = { x: .9, y: .16, s: .62, a: 0 }; let started = false;
+function resize() { renderer.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+const halfH = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * cam.position.z;
+function goal() {
+  // weighted blend of the sections nearest the middle of the screen
+  const mid = innerHeight / 2; let wsum = 0; const acc = [0, 0, 0, 0];
+  for (const t of targets) {
+    const r = t.el.getBoundingClientRect(); const d = r.top > mid ? r.top - mid : r.bottom < mid ? mid - r.bottom : 0;
+    const w = Math.max(0, 1 - d / (innerHeight * .6)); if (w > 0) { wsum += w; t.v.forEach((x, i) => acc[i] += x * w); }
+  }
+  return wsum ? acc.map((x) => x / wsum) : [cur.x, cur.y, cur.s, cur.a];
+}
+let last = performance.now(), mx = 0, my = 0;
+addEventListener('pointermove', (e) => { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5; });
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; const t = now / 1000;
+  if (!started && !document.body.classList.contains('loading')) { started = true; document.documentElement.classList.add('gl-on'); }
+  const g = goal(), k = 1 - Math.exp(-dt * 4);
+  cur.x += (g[0] - cur.x) * k; cur.y += (g[1] - cur.y) * k; cur.s += (g[2] - cur.s) * k; cur.a += ((started ? g[3] : 0) - cur.a) * k;
+  const hw = halfH * cam.aspect, small = innerWidth < 900;
+  orb.position.set((cur.x * 2 - 1) * hw + mx * .3, -(cur.y * 2 - 1) * halfH - my * .3 + (reduce ? 0 : Math.sin(t * .9) * .06), 0);
+  orb.scale.setScalar(cur.s * halfH * (small ? .7 : 1));
+  if (!reduce) { orb.rotation.y += dt * .25; orb.rotation.x = Math.sin(t * .3) * .2; }
+  want.set(accent()); if (!want.equals(col)) { col.lerp(want, Math.min(1, dt * 8)); mat.color.copy(col); fill.color.copy(col); frames.material.color.copy(col); }
+  orb.visible = cur.a > .02; frames.material.opacity = .13 * Math.min(1, cur.a);
+  for (let i = 0; i < N; i++) {
+    const p = seeds[i]; p.z += dt * (2.4 + p.s); if (p.z > 40) p.z -= 40;
+    v.set(p.x, p.y, -30 + p.z); q.setFromAxisAngle(zAxis, p.r); sc.setScalar(p.s); m4.compose(v, q, sc); frames.setMatrixAt(i, m4);
+  }
+  if (N) frames.instanceMatrix.needsUpdate = true;
+  renderer.render(scene, cam);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
