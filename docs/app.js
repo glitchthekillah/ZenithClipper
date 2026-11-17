@@ -164,12 +164,12 @@ setInterval(() => $$('[data-cpu]').forEach((e) => e.textContent = (1.1 + Math.ra
 const lb = $('#ld-bar'); for (let i = 0; i < 20; i++) lb.appendChild(document.createElement('i'));
 const lbi = $$('i', lb), first = bgv[0]; let shown = 0, target = .1;
 const bump = (x) => target = Math.max(target, x);
-first.addEventListener('loadeddata', () => bump(.75)); first.addEventListener('canplaythrough', () => bump(1));
-(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => bump(.55)); setTimeout(() => bump(1), 7000);
+first.addEventListener('loadedmetadata', () => bump(.6)); first.addEventListener('loadeddata', () => bump(1));
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => bump(.55)); setTimeout(() => bump(1), 3500);
 const lt0 = performance.now();
 (function tick() {
   const minT = performance.now() - lt0 > (reduce ? 200 : 1500);
-  shown += ((minT ? target : Math.min(target, .9)) - shown) * .06; if (target >= 1 && minT && shown > .995) shown = 1;
+  shown += ((minT ? target : Math.min(target, .9)) - shown) * .09; if (target >= 1 && minT && shown > .995) shown = 1;
   const k = Math.round(shown * 20); lbi.forEach((b, i) => { b.classList.toggle('on', i < k); b.classList.toggle('head', i === k - 1); });
   $('#ld-n').textContent = String(Math.round(shown * 100)).padStart(3, '0') + '%';
   if (shown < 1) return requestAnimationFrame(tick);
