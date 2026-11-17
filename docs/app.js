@@ -165,7 +165,7 @@ const lb = $('#ld-bar'); for (let i = 0; i < 20; i++) lb.appendChild(document.cr
 const lbi = $$('i', lb), first = bgv[0]; let shown = 0, target = .1;
 const bump = (x) => target = Math.max(target, x);
 first.addEventListener('loadedmetadata', () => bump(.6)); first.addEventListener('loadeddata', () => bump(1));
-(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => bump(.55)); setTimeout(() => bump(1), 3500);
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => bump(1)); setTimeout(() => bump(1), 2200);
 const lt0 = performance.now();
 (function tick() {
   const minT = performance.now() - lt0 > (reduce ? 200 : 1500);
