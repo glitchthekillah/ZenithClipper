@@ -113,15 +113,39 @@ static class LinuxUi
         bool self = Updates.CanSelfUpdate && update.DownloadUrl is not null;
         if (await Dialog("--question", "--title=ZenithClipper update", $"--text=ZenithClipper {update.Version.ToString(3)} is available.", $"--ok-label={(self ? "Update now" : "Open download page")}", "--cancel-label=Later") == null) return;
         if (!self) { using var _ = Process.Start(new ProcessStartInfo("xdg-open") { ArgumentList = { update.PageUrl } }); return; }
-        string current = Environment.GetEnvironmentVariable("APPIMAGE")!;
         string downloaded = await Updates.DownloadAsync(update);
-        // Same folder, then rename over the running file: Linux keeps the old inode alive until it exits.
-        string staged = current + ".new";
-        File.Copy(downloaded, staged, true);
-        if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(staged, File.GetUnixFileMode(current) | UnixFileMode.UserExecute);
-        File.Move(staged, current, true); File.Delete(downloaded);
+        string relaunch;
+        switch (Updates.Flavor)
+        {
+            case Updates.Kind.AppImage:
+            {
+                string current = Environment.GetEnvironmentVariable("APPIMAGE")!;
+                // Same folder, then rename over the running file: Linux keeps the old inode alive until it exits.
+                string staged = current + ".new";
+                File.Copy(downloaded, staged, true);
+                if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(staged, File.GetUnixFileMode(current) | UnixFileMode.UserExecute);
+                File.Move(staged, current, true);
+                relaunch = current; break;
+            }
+            case Updates.Kind.LinuxDeb:
+                // System package: pkexec shows the desktop's password prompt, then apt replaces /opt/zenithclipper.
+                await MediaTools.RunAsync("pkexec", new[] { "apt-get", "install", "-y", "--allow-downgrades", downloaded });
+                relaunch = "/usr/bin/zenithclipper"; break;
+            default:
+            {
+                // Unpacked tarball: extract beside the current folder, then swap the files in (running binaries keep their old inodes).
+                string root = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory), stage = root + ".update";
+                if (Directory.Exists(stage)) Directory.Delete(stage, true);
+                Directory.CreateDirectory(stage);
+                await MediaTools.RunAsync("tar", new[] { "-xzf", downloaded, "-C", stage, "--strip-components=1" });
+                await MediaTools.RunAsync("cp", new[] { "-a", stage + "/.", root + "/" });
+                Directory.Delete(stage, true);
+                relaunch = Environment.ProcessPath!; break;
+            }
+        }
+        File.Delete(downloaded);
         try { await Control.SendAsync(new("shutdown")); } catch (Exception ex) when (ex is IOException or TimeoutException) { }
-        using (Process.Start(new ProcessStartInfo(current) { UseShellExecute = false, ArgumentList = { "panel" } })) { }
+        using (Process.Start(new ProcessStartInfo(relaunch) { UseShellExecute = false, ArgumentList = { "panel" } })) { }
         Environment.Exit(0);
     }
 

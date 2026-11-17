@@ -822,8 +822,8 @@ public sealed class PanelForm : Form
         if (install) { await InstallUpdateAsync(); return; }
         ShowToast($"ZenithClipper {update.Version.ToString(3)} is available.", Banner.Tone.Info, Updates.CanSelfUpdate ? "Update now" : "Download", async () => await InstallUpdateAsync(), sticky: true);
     }
-    /// <summary>Installed copies download the installer, verify it and run it (it closes and reopens the app).
-    /// Portable copies open the release page instead, since they can't replace themselves while running.</summary>
+    /// <summary>Downloads the newest release for this kind of copy, verifies it and installs it: the installer for
+    /// installed copies, an unpack-and-swap for portable ones. Either way the app closes and reopens on the new version.</summary>
     async Task InstallUpdateAsync()
     {
         if (update is null || updating) return;
@@ -833,9 +833,14 @@ public sealed class PanelForm : Form
         {
             int shown = -1;
             var progress = new Progress<double>(f => { int pct = (int)(f * 100); if (pct != shown) { shown = pct; ShowToast($"Downloading ZenithClipper {update.Version.ToString(3)}… {pct}%", Banner.Tone.Info, sticky: true); } });
-            string setup = await Updates.DownloadAsync(update, progress);
+            string file = await Updates.DownloadAsync(update, progress);
             ShowToast("Installing the update. ZenithClipper will reopen when it's done.", Banner.Tone.Info, sticky: true);
-            Process.Start(new ProcessStartInfo(setup) { UseShellExecute = true, ArgumentList = { "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/relaunch=1" } });
+            if (Updates.Flavor == Updates.Kind.WindowsPortable)
+            {
+                PortableUpdate.Start(file);
+                try { await EngineClient.SendAsync(new("shutdown")); } catch (Exception ex) when (ex is IOException or TimeoutException) { }
+            }
+            else Process.Start(new ProcessStartInfo(file) { UseShellExecute = true, ArgumentList = { "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/relaunch=1" } });
             await Task.Delay(800);
             Application.Exit();
         }

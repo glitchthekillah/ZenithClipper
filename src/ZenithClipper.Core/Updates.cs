@@ -27,12 +27,13 @@ public static class Updates
     }
 
     /// <summary>How this copy was installed decides what "Update now" does.</summary>
-    public enum Kind { WindowsInstalled, WindowsPortable, AppImage, LinuxOther }
+    public enum Kind { WindowsInstalled, WindowsPortable, AppImage, LinuxDeb, LinuxTarball }
     public static Kind Flavor =>
         OperatingSystem.IsWindows() ? (File.Exists(Path.Combine(AppContext.BaseDirectory, "portable.flag")) ? Kind.WindowsPortable : Kind.WindowsInstalled)
-        : Environment.GetEnvironmentVariable("APPIMAGE") is { Length: > 0 } ? Kind.AppImage : Kind.LinuxOther;
-    /// <summary>True when "Update now" can install by itself; otherwise it opens the release page.</summary>
-    public static bool CanSelfUpdate => Flavor is Kind.WindowsInstalled or Kind.AppImage;
+        : Environment.GetEnvironmentVariable("APPIMAGE") is { Length: > 0 } ? Kind.AppImage
+        : AppContext.BaseDirectory.StartsWith("/opt/zenithclipper", StringComparison.Ordinal) ? Kind.LinuxDeb : Kind.LinuxTarball;
+    /// <summary>Every packaged copy installs updates by itself. Only development builds run through `dotnet` open the release page.</summary>
+    public static bool CanSelfUpdate => Path.GetFileNameWithoutExtension(Environment.ProcessPath) != "dotnet";
 
     static readonly HttpClient Http = CreateClient();
     static HttpClient CreateClient()
@@ -73,6 +74,8 @@ public static class Updates
         Kind.WindowsInstalled => asset.EndsWith("_x64-setup.exe", StringComparison.OrdinalIgnoreCase),
         Kind.WindowsPortable => asset.EndsWith("_x64-portable.zip", StringComparison.OrdinalIgnoreCase),
         Kind.AppImage => asset.EndsWith("-x86_64.AppImage", StringComparison.OrdinalIgnoreCase),
+        Kind.LinuxDeb => asset.EndsWith("_amd64.deb", StringComparison.OrdinalIgnoreCase),
+        Kind.LinuxTarball => asset.EndsWith("-linux-x64.tar.gz", StringComparison.OrdinalIgnoreCase),
         _ => false,
     };
 
