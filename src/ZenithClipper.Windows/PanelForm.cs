@@ -273,6 +273,7 @@ public sealed class PanelForm : Form
             foreach (float cpu in new[] { 1.4f, 1.9f, 1.6f, 2.2f, 1.7f, 1.5f, 2.0f, 1.8f, 1.6f, 1.7f }) tiles.SetPerf(cpu, 86L * 1048576);
             tiles.SetToday(0, 0);
         }
+        if (Environment.GetEnvironmentVariable("ZENITHCLIPPER_SNAPSHOT_FILM") is { Length: > 0 } filmDir) FilmRail(filmDir);
         railWidget.Size = new Size(railWidget.Width, Theme.S(1200)); Save(railWidget, "rail");
         settingsWidget.Location = new Point(-32000, -32000); settingsWidget.Show(this); settingsWidget.Height = Math.Min(Theme.S(1400), SettingsHeight());
         for (int i = 0; i < settingsPages.Count; i++) { showPage(i); Save(settingsWidget, $"settings-{i}"); }
@@ -283,6 +284,34 @@ public sealed class PanelForm : Form
         showPage(2); if (!settingsPages[2].Visible || settingsPages[0].Visible) problems.Add("nav did not switch to Audio");
         File.WriteAllText(Path.Combine(SnapshotDir!, "report.txt"), problems.Count == 0 ? "OK" : string.Join(Environment.NewLine, problems));
         Close();
+    }
+    /// <summary>Website capture (ZENITHCLIPPER_SNAPSHOT_FILM=folder): renders the real rail frame by frame at 30 fps while it
+    /// records, picks "2m", saves a clip and shows the real success toast. Uses sample status only; never talks to the recorder.</summary>
+    void FilmRail(string dir)
+    {
+        Directory.CreateDirectory(dir);
+        railWidget.Location = new Point(-32000, -32000); if (!railWidget.Visible) railWidget.Show(this);
+        railWidget.Size = new Size(railWidget.Width, Theme.S(1200)); railWidget.PerformLayout(); Application.DoEvents();
+        int n = 0; double buffered = 1271; var rnd = new Random(7);
+        void Frame(int hold = 1)
+        {
+            status = status! with { BufferedSeconds = buffered, BufferBytes = (long)(buffered * 0.48 * 1048576) };
+            header.SetStatus(status, false); meter.Update(status, settings); hero.Update(status, settings, false);
+            Application.DoEvents();
+            using var bmp = new Bitmap(railWidget.ClientSize.Width, railWidget.ClientSize.Height);
+            railWidget.Controls[0].DrawToBitmap(bmp, new Rectangle(Point.Empty, railWidget.ClientSize));
+            for (int i = 0; i < hold; i++) { bmp.Save(Path.Combine(dir, $"f{++n:D5}.png")); buffered += 1 / 30.0; }
+            if (n % 10 == 0) tiles.SetPerf(1.2f + (float)rnd.NextDouble() * .9f, 86L * 1048576);
+        }
+        loadingSettings = true; SelectPreset(lengths, 15); loadingSettings = false; UpdateSaveText();
+        for (int i = 0; i < 60; i++) Frame();                              // recording, buffer ticking
+        foreach (int v in new[] { 30, 60, 120 }) { loadingSettings = true; SelectPreset(lengths, v); loadingSettings = false; UpdateSaveText(); for (int i = 0; i < 14; i++) Frame(); }
+        for (int i = 0; i < 20; i++) Frame();
+        save.Text = "Saving…"; for (int i = 0; i < 7; i++) Frame();      // ~211 ms median save
+        UpdateSaveText(); tiles.SetToday(1, 58L * 1048576);
+        ShowToast("Saved 2m clip  ·  Clip-2026-11-17-21-42-08-3f9a1c.mp4", Banner.Tone.Success, "Edit", () => { });
+        for (int i = 0; i < 75; i++) Frame();
+        File.WriteAllText(Path.Combine(dir, "frames.txt"), n.ToString());
     }
     /// <summary>Dialogs belong to the window you are looking at, so they open on top of it instead of under the dimmed backdrop.</summary>
     IWin32Window DialogOwner => settingsBuilt && settingsWidget.Visible ? settingsWidget : railWidget;

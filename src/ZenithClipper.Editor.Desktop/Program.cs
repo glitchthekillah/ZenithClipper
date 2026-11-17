@@ -33,6 +33,7 @@ internal static class Program
             return;
         }
         if(Array.IndexOf(args,"--showcase") is int sc and >=0){Showcase.Run(args[sc+1],args[sc+2]);return;}
+        if(Array.IndexOf(args,"--film") is int fm and >=0){FilmCapture.Run(args[fm+1],args[fm+2]);return;}
         if(Array.IndexOf(args,"--user-flow") is int uf and >=0){UserFlowTest.Run(args[uf+1],args[uf+2]);return;}
         if(args.Contains("--metadata-regression-test")) { MediaMetadata.VerifyMetadata(); return; }
         if (args.Contains("--headless-smoke"))
