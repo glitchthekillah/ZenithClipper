@@ -151,12 +151,13 @@ $$('.split').forEach((el) => {
 $$('.giant').forEach((g) => { g.innerHTML = [...g.textContent].map((c) => `<span class="ch">${c}</span>`).join(''); });
 
 /* ---------- Fit the fixed-size UIs into their boxes (they stay vector sharp) ---------- */
+let hs = 1;
 function fitAll() {
   const ed = $('#ed-fit'), box = $('#ed-box'); const s = Math.min(box.clientWidth / 1602, box.clientHeight / 902);
   ed.style.transform = `translateX(-50%) scale(${s})`; ed.style.transformOrigin = 'top center';
   const rp = $('#rp-fit'), small = innerWidth < 900; const rs = small ? Math.min(.8, (innerWidth - 40) / 402, (innerHeight * .52) / 640) : Math.min(1.25, (innerHeight * .86) / 640);
   rp.style.transform = `scale(${rs})`; rp.parentElement.style.width = 402 * rs + 'px'; rp.parentElement.style.height = 640 * rs + 'px';
-  const hs = Math.min(1.3, innerHeight * .64 / 640, innerWidth * .8 / 400); $('#hero-stage').style.zoom = hs;
+  hs = Math.min(1.3, innerHeight * .64 / 640, innerWidth * .8 / 400); $('#hero-stage').style.zoom = hs;
 }
 addEventListener('resize', fitAll); fitAll();
 
@@ -210,10 +211,11 @@ const vio = new IntersectionObserver((es) => es.forEach((e) => { const v = e.tar
 const playIn = (sel) => $$('video', $(sel)).forEach((v) => vio.observe(v));
 
 // Hero: the giant words part, the panel lifts flat
-gsap.timeline({ scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 1 } })
+gsap.set('#hero-stage', { xPercent: -50, yPercent: -50, x: 0, y: 0 });
+gsap.timeline({ scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 1, invalidateOnRefresh: true } })
   .to('#g-back', { yPercent: -60, xPercent: -18, opacity: 0, ease: 'none' }, 0)
   .to('#g-front', { yPercent: 70, xPercent: 18, opacity: 0, ease: 'none' }, 0)
-  .to('#hero-stage', innerWidth < 820 ? { opacity: 0, yPercent: -80, ease: 'none', duration: .3 } : { left: '72%', ease: 'none' }, 0)
+  .to('#hero-stage', innerWidth < 820 ? { opacity: 0, yPercent: -80, ease: 'none', duration: .3 } : { x: () => innerWidth * 0.22 / hs, ease: 'none' }, 0)
   .to('#hero-panel', { rotate: 0, ease: 'none' }, 0)
   .to('.hero-tag', { opacity: 0, ease: 'none', duration: .2 }, 0)
   .fromTo('#hero-copy', { opacity: 0, y: 40 }, { opacity: 1, y: 0, ease: 'none', duration: .35 }, .3)
