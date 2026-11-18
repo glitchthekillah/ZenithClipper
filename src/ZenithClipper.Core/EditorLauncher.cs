@@ -23,6 +23,9 @@ public static class EditorLauncher
         if(!string.IsNullOrWhiteSpace(file))info.ArgumentList.Add(Path.GetFullPath(file));
         if(!OperatingSystem.IsWindows() && Environment.GetEnvironmentVariable("ZENITHCLIPPER_MLT_ROOT") is {Length:>0} runtime)
             info.Environment["LD_LIBRARY_PATH"]=Path.Combine(runtime,"lib")+":"+Environment.GetEnvironmentVariable("LD_LIBRARY_PATH");
+        // Mac: some bundled libraries (SDL) load their helpers by name at runtime; point them at the app's own copies.
+        if(OperatingSystem.IsMacOS())
+            info.Environment["DYLD_FALLBACK_LIBRARY_PATH"]=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(executable)!,"..","mlt","lib"));
         using var process=Process.Start(info)??throw new IOException("Could not start the editor.");return true;
     }
 }

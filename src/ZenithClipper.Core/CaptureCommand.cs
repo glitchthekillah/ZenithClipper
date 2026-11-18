@@ -23,6 +23,8 @@ public static class CaptureCommand
         bool amfGraph=amfNative&&directSource;
         if(amfNative&&!amfGraph)args.AddRange(["-f","lavfi","-i",$"vsrc_amf=monitor_index={s.Monitor}:framerate={fps}"]);
         else if (!amfGraph && platform == "windows") args.AddRange(["-f", "lavfi", "-i", $"ddagrab=output_idx={s.Monitor}:framerate={fps}:draw_mouse=1"]);
+        // Mac: the ScreenCaptureKit helper writes paced NV12 frames, already scaled, to our stdin.
+        else if (platform == "mac") args.AddRange(["-thread_queue_size", "64", "-f", "rawvideo", "-pix_fmt", "nv12", "-video_size", s.LinuxVideoSize, "-framerate", $"{fps}", "-i", "pipe:0"]);
         else if (!amfGraph && wayland) args.AddRange(["-thread_queue_size", "64", "-f", "matroska", "-i", "pipe:0"]);
         else if (!amfGraph)
         {
@@ -37,6 +39,8 @@ public static class CaptureCommand
         {
             args.AddRange(["-thread_queue_size", "128"]);
             if (platform == "windows") args.AddRange(["-probesize", "32", "-analyzeduration", "0", "-f", "s16le", "-ar", "48000", "-ac", "2", "-channel_layout", "stereo", "-i", audioSource]);
+            else if (platform == "mac" && audioSource.StartsWith(':')) args.AddRange(["-f", "avfoundation", "-i", audioSource]);
+            else if (platform == "mac") args.AddRange(["-f", "s16le", "-ar", "48000", "-ac", "2", "-i", audioSource]);
             else args.AddRange(["-f", "pulse", "-i", audioSource]);
         }
         int audioIndex=amfGraph?0:1;
@@ -65,7 +69,7 @@ public static class CaptureCommand
             if(!amfNative)
             {
                 if(platform=="windows"&&!gpuDirect)filters.AddRange(["hwdownload","format=bgra"]);
-                if(s.OutputWidth>0)filters.Add($"scale={s.OutputWidth}:-2");
+                if(s.OutputWidth>0 && platform!="mac")filters.Add($"scale={s.OutputWidth}:-2");
             }
             if(platform=="windows" && s.Encoder=="nvenc" && !gpuDirect)
             {
@@ -85,12 +89,23 @@ public static class CaptureCommand
         return args;
     }
     public static IEnumerable<string> EncoderArgs(Settings s)=>EncoderArgs(s,false);
+    /// <summary>VideoToolbox has no constant-quality mode on every Mac, so Quality (lower is better, like CRF) maps to a bitrate
+    /// for the frame size: about 12 Mbit/s at 1080p60 for the default 20, doubling every 6 steps.</summary>
+    internal static long VideoToolboxBitrate(Settings s)
+    {
+        int w = 1920, h = 1080, fps = s.Fps > 0 ? s.Fps : 60;
+        var parts = s.LinuxVideoSize.Split('x');
+        if (parts.Length == 2 && int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int pw) && int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int ph)) { w = pw; h = ph; }
+        double bits = w * (double)h * fps * 0.1 * Math.Pow(2, (20 - s.Quality) / 6.0);
+        return (long)Math.Clamp(bits, 2_000_000, 120_000_000);
+    }
     static IEnumerable<string> EncoderArgs(Settings s,bool directGraph) => s.Encoder switch
     {
         "nvenc" => ["-c:v", "h264_nvenc", "-preset", "p1", "-tune", "ll", "-surfaces", "4", "-rc-lookahead", "0", "-delay", "0", "-rc", "vbr", "-cq", $"{s.Quality}", "-b:v", "0"],
         "qsv" => ["-c:v", "h264_qsv", "-preset", "veryfast", "-async_depth", "1", "-look_ahead", "0", "-global_quality", $"{s.Quality}"],
         "amf" => ["-c:v", "h264_amf", "-quality", "speed", "-async_depth", directGraph?"1":"2", "-vbaq", "0", "-rc", "cqp", "-qp_i", $"{s.Quality}", "-qp_p", $"{s.Quality}"],
         "vaapi" => ["-c:v", "h264_vaapi", "-qp", $"{s.Quality}"],
+        "videotoolbox" => ["-c:v", "h264_videotoolbox", "-realtime", "1", "-profile:v", "high", "-b:v", $"{VideoToolboxBitrate(s)}", "-maxrate", $"{VideoToolboxBitrate(s) * 3 / 2}", "-bufsize", $"{VideoToolboxBitrate(s) * 2}"],
         "software" => ["-c:v", "libx264", "-preset", "ultrafast", "-crf", $"{s.Quality}", "-pix_fmt", "yuv420p"],
         _ => throw new ArgumentException("Unknown encoder")
     };

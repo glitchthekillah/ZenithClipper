@@ -27,13 +27,14 @@ public static class Updates
     }
 
     /// <summary>How this copy was installed decides what "Update now" does.</summary>
-    public enum Kind { WindowsInstalled, WindowsPortable, AppImage, LinuxDeb, LinuxTarball }
+    public enum Kind { WindowsInstalled, WindowsPortable, AppImage, LinuxDeb, LinuxTarball, MacApp }
     public static Kind Flavor =>
         OperatingSystem.IsWindows() ? (File.Exists(Path.Combine(AppContext.BaseDirectory, "portable.flag")) ? Kind.WindowsPortable : Kind.WindowsInstalled)
+        : OperatingSystem.IsMacOS() ? Kind.MacApp
         : Environment.GetEnvironmentVariable("APPIMAGE") is { Length: > 0 } ? Kind.AppImage
         : AppContext.BaseDirectory.StartsWith("/opt/zenithclipper", StringComparison.Ordinal) ? Kind.LinuxDeb : Kind.LinuxTarball;
     /// <summary>Every packaged copy installs updates by itself. Only development builds run through `dotnet` open the release page.</summary>
-    public static bool CanSelfUpdate => Path.GetFileNameWithoutExtension(Environment.ProcessPath) != "dotnet";
+    public static bool CanSelfUpdate => !OperatingSystem.IsMacOS() && Path.GetFileNameWithoutExtension(Environment.ProcessPath) != "dotnet";
 
     static readonly HttpClient Http = CreateClient();
     static HttpClient CreateClient()
@@ -76,6 +77,7 @@ public static class Updates
         Kind.AppImage => asset.EndsWith("-x86_64.AppImage", StringComparison.OrdinalIgnoreCase),
         Kind.LinuxDeb => asset.EndsWith("_amd64.deb", StringComparison.OrdinalIgnoreCase),
         Kind.LinuxTarball => asset.EndsWith("-linux-x64.tar.gz", StringComparison.OrdinalIgnoreCase),
+        Kind.MacApp => asset.EndsWith("_mac-arm64.dmg", StringComparison.OrdinalIgnoreCase),
         _ => false,
     };
 

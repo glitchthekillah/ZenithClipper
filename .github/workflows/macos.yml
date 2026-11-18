@@ -20,7 +20,7 @@ jobs:
           "$R/app/ffmpeg" -hide_banner -version | head -1
           "$R/app/ffprobe" -hide_banner -version | head -1
           "$R/app/zenithclipper" config-path
-          DYLD_FALLBACK_LIBRARY_PATH="$R/mlt/lib" timeout 300 "$R/editor/ZenithClipper.Editor" --headless-smoke | tail -5
+          DYLD_FALLBACK_LIBRARY_PATH="$R/mlt/lib" "$R/editor/ZenithClipper.Editor" --headless-smoke | tail -5
           "$R/app/ffmpeg" -hide_banner -f lavfi -i color=s=320x180:r=30 -frames:v 30 -c:v h264_videotoolbox -b:v 2M -f null - 2>&1 | tail -2 || true
       - uses: actions/upload-artifact@v4
         with:

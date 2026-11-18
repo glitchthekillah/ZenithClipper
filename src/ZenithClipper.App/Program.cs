@@ -20,6 +20,7 @@ try
             if (!File.Exists(ui)) throw new FileNotFoundException("Build/package the Windows panel first.", ui);
             var uiStart = new ProcessStartInfo(ui) { UseShellExecute = false, CreateNoWindow = true }; uiStart.ArgumentList.Add(command); foreach(var argument in args.Skip(1)) uiStart.ArgumentList.Add(argument); Process.Start(uiStart);
         }
+        else if (OperatingSystem.IsMacOS()) Console.WriteLine("On a Mac, ZenithClipper's controls live in its menu bar icon.");
         else await LinuxUi.ShowAsync(command, args.Skip(1).ToArray());
         return 0;
     }
