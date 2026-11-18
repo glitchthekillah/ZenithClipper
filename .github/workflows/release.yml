@@ -1,6 +1,6 @@
 name: release
 # Builds every download and attaches it to the GitHub release for the tag:
-#   Windows: installer (setup.exe) and portable zip.  Linux: AppImage, .deb and tar.gz.  Plus SHA256SUMS.
+#   Windows: installer (setup.exe) and portable zip.  Linux: AppImage, .deb and tar.gz.  Mac: .dmg (Apple Silicon).  Plus SHA256SUMS.
 # Create a draft (gh release create vX.Y.Z --draft --notes-file ...), then run this workflow for the tag (gh workflow run release.yml -f tag=vX.Y.Z).
 # It can also be run by hand for an existing tag.
 on:
@@ -155,8 +155,32 @@ jobs:
             dist/*.deb
             dist/*.AppImage
 
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build app and dmg
+        run: bash scripts/build-macos.sh "${TAG#v}" dist
+      - name: Smoke test without Homebrew's copies
+        run: |
+          set -exo pipefail
+          brew uninstall --ignore-dependencies mlt ffmpeg sdl2 frei0r || true
+          R=dist/ZenithClipper.app/Contents/Resources
+          "$R/app/ffmpeg" -hide_banner -version | head -1
+          "$R/app/zenithclipper" config-path
+          DYLD_FALLBACK_LIBRARY_PATH="$R/mlt/lib" "$R/editor/ZenithClipper.Editor" --headless-smoke | tail -3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: dist/*.dmg
+
   publish:
-    needs: [windows, linux]
+    needs: [windows, linux, mac]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
