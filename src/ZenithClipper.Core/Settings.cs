@@ -14,6 +14,8 @@ public sealed record Settings
     public int Monitor { get; init; }
     public string WindowsCaptureBackend { get; init; } = "auto";
     public bool CaptureAudio { get; init; } = true;
+    /// <summary>Linux: mix the default microphone into clips.</summary>
+    public bool CaptureMicrophone { get; init; }
     public string[] ExcludedApps { get; init; } = ["Spotify"];
     /// <summary>Per-app level in clips, in percent (0–200). Apps not listed record at 100%. Applied live.</summary>
     public Dictionary<string, int> AppVolumes { get; init; } = new(StringComparer.OrdinalIgnoreCase);

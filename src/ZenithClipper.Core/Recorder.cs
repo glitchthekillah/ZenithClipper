@@ -112,7 +112,9 @@ public sealed class Recorder : IRecorderEngine
             }
             var args = OperatingSystem.IsWindows()&&capture.Encoder=="amf"&&capture.WindowsCaptureBackend=="auto"
                 ? CaptureCommand.BuildNativeAmfGraph(capture,session,source is null?[]:[source])
-                : CaptureCommand.Build(capture, OperatingSystem.IsWindows() ? "windows" : "linux", session, source, wayland);
+                : OperatingSystem.IsWindows()
+                    ? CaptureCommand.Build(capture, "windows", session, source, wayland)
+                    : CaptureCommand.BuildMulti(capture, "linux", session, [.. (source is null ? Array.Empty<string>() : [source]), .. (settings.CaptureMicrophone ? ["@DEFAULT_SOURCE@"] : Array.Empty<string>())], wayland);
             if(OperatingSystem.IsWindows())
             {
                 ffmpeg = MediaTools.Start(MediaTools.FindFfmpeg(settings), args, true); captureJob=new(ffmpeg);

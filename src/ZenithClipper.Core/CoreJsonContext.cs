@@ -54,6 +54,7 @@ internal sealed class SettingsJsonConverter : JsonConverter<Settings>
                 else if(name.Equals("Monitor", options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { Monitor = reader.GetInt32() };
                 else if(name.Equals("WindowsCaptureBackend", options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { WindowsCaptureBackend = reader.GetString()! };
                 else if(name.Equals("CaptureAudio", options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { CaptureAudio = reader.GetBoolean() };
+                else if(name.Equals("CaptureMicrophone", options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { CaptureMicrophone = reader.GetBoolean() };
                 else if(name.Equals("ExcludedApps", options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { ExcludedApps = JsonStringArray.Read(ref reader) };
                 else if(name.Equals("AppVolumes", options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
                 {
@@ -89,6 +90,7 @@ internal sealed class SettingsJsonConverter : JsonConverter<Settings>
         writer.WriteNumber(options.PropertyNamingPolicy?.ConvertName("Monitor") ?? "Monitor", value.Monitor);
         writer.WriteString(options.PropertyNamingPolicy?.ConvertName("WindowsCaptureBackend") ?? "WindowsCaptureBackend", value.WindowsCaptureBackend);
         writer.WriteBoolean(options.PropertyNamingPolicy?.ConvertName("CaptureAudio") ?? "CaptureAudio", value.CaptureAudio);
+        writer.WriteBoolean(options.PropertyNamingPolicy?.ConvertName("CaptureMicrophone") ?? "CaptureMicrophone", value.CaptureMicrophone);
         JsonStringArray.Write(writer, options.PropertyNamingPolicy?.ConvertName("ExcludedApps") ?? "ExcludedApps", value.ExcludedApps);
         writer.WriteStartObject(options.PropertyNamingPolicy?.ConvertName("AppVolumes") ?? "AppVolumes");
         foreach(var pair in value.AppVolumes.OrderBy(p=>p.Key,StringComparer.OrdinalIgnoreCase))writer.WriteNumber(pair.Key,pair.Value);

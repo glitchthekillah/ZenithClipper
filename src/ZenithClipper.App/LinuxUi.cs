@@ -24,7 +24,7 @@ static class LinuxUi
         while (true)
         {
             var response = await Control.SendAsync(new("status")); var status = response.Status;
-            var choice = await Dialog("--list", "--title=ZenithClipper controls", $"--text={status?.State} — {status?.BufferedSeconds:F1}s buffered\n{status?.Error}", "--column=Action", "Save clip", "Pause capture", "Resume capture", "Settings", "Startup", "Keyboard shortcuts", "Check for updates", "Open editor", "Open clips", "Quit engine", "--height=420", "--width=600");
+            var choice = await Dialog("--list", "--title=ZenithClipper controls", $"--text={status?.State} — {status?.BufferedSeconds:F1}s buffered\n{status?.Error}", "--column=Action", "Save clip", "Pause capture", "Resume capture", "Settings", "Clip folder", "Microphone in clips", "Startup", "Keyboard shortcuts", "Check for updates", "Open editor", "Open clips", "Quit engine", "--height=480", "--width=600");
             if (choice == null) return;
             try
             {
@@ -34,6 +34,8 @@ static class LinuxUi
                     case "Pause capture": Check(await Control.SendAsync(new("pause"))); break;
                     case "Resume capture": Check(await Control.SendAsync(new("resume"))); break;
                     case "Settings": await ConfigureAsync(); break;
+                    case "Clip folder": await ConfigureFolderAsync(); break;
+                    case "Microphone in clips": await ConfigureMicAsync(); break;
                     case "Startup": await ConfigureStartupAsync(); break;
                     case "Keyboard shortcuts": await ConfigureShortcutsAsync(); break;
                     case "Check for updates": await UpdateAsync(); break;
@@ -73,6 +75,21 @@ static class LinuxUi
         var updated = settings with { ClipHotkey = clip.Trim(), PanelHotkey = panel.Trim() };
         updated.Validate();
         Check(await Control.SendAsync(new("configure", Settings: updated)));
+    }
+    static async Task ConfigureFolderAsync()
+    {
+        var r = await Control.SendAsync(new("settings")); Check(r); var s = r.Settings!;
+        var dir = await Dialog("--file-selection", "--directory", "--title=Where should clips be saved?", $"--filename={s.ClipDirectory.TrimEnd('/')}/");
+        if (string.IsNullOrWhiteSpace(dir)) return;
+        Check(await Control.SendAsync(new("configure", Settings: s with { ClipDirectory = dir.Trim() })));
+    }
+    static async Task ConfigureMicAsync()
+    {
+        var r = await Control.SendAsync(new("settings")); Check(r); var s = r.Settings!;
+        var on = await Dialog("--list", "--radiolist", "--title=Microphone in clips", "--text=Mix your default microphone into clips?", "--column=", "--column=Microphone", s.CaptureMicrophone ? "TRUE" : "FALSE", "On", s.CaptureMicrophone ? "FALSE" : "TRUE", "Off", "--height=220");
+        if (on == null) return;
+        bool want = on.Trim() == "On";
+        if (want != s.CaptureMicrophone) Check(await Control.SendAsync(new("configure", Settings: s with { CaptureMicrophone = want })));
     }
     static async Task ConfigureAsync()
     {
