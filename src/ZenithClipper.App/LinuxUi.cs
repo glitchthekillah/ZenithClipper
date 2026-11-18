@@ -5,10 +5,49 @@ using System.Text.Json;
 
 static class LinuxUi
 {
+    static bool Tool(string name) => (Environment.GetEnvironmentVariable("PATH") ?? "").Split(':', StringSplitOptions.RemoveEmptyEntries).Any(d => File.Exists(Path.Combine(d, name)));
+    /// <summary>Turns the zenity arguments used here into the matching kdialog call. Returns whether the answer is a multi-select list.</summary>
+    static (string[] Args, bool Multi) ToKdialog(string[] z)
+    {
+        var flags = new Dictionary<string, string>(); var values = new List<string>(); var columns = 0;
+        foreach (var a in z)
+        {
+            if (!a.StartsWith("--")) { values.Add(a); continue; }
+            int eq = a.IndexOf('='); string k = eq < 0 ? a[2..] : a[2..eq], v = eq < 0 ? "" : a[(eq + 1)..];
+            if (k == "column") columns++; else flags[k] = v;
+        }
+        var k2 = new List<string>(); if (flags.TryGetValue("title", out var title)) { k2.Add("--title"); k2.Add(title); }
+        string text = flags.GetValueOrDefault("text", flags.GetValueOrDefault("title", "ZenithClipper"));
+        if (flags.ContainsKey("list"))
+        {
+            bool check = flags.ContainsKey("checklist"), radio = flags.ContainsKey("radiolist");
+            k2.Add(check ? "--checklist" : radio ? "--radiolist" : "--menu"); k2.Add(text);
+            if (check || radio) for (int i = 0; i + 1 < values.Count; i += 2) { k2.Add(values[i + 1]); k2.Add(values[i + 1]); k2.Add(values[i] == "TRUE" ? "on" : "off"); }
+            else foreach (var v in values) { k2.Add(v); k2.Add(v); }
+            if (check) k2.Add("--separate-output");
+            return ([.. k2], false);
+        }
+        if (flags.ContainsKey("entry")) { k2.Add("--inputbox"); k2.Add(text); k2.Add(flags.GetValueOrDefault("entry-text", "")); }
+        else if (flags.ContainsKey("file-selection"))
+        {
+            string start = flags.GetValueOrDefault("filename", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+            if (flags.ContainsKey("directory")) { k2.Add("--getexistingdirectory"); k2.Add(start); }
+            else if (flags.ContainsKey("save")) { k2.Add("--getsavefilename"); k2.Add(start); }
+            else { k2.Add("--getopenfilename"); k2.Add(start); if (flags.TryGetValue("file-filter", out var f)) k2.Add(f.Contains('|') ? f.Split('|')[1].Trim() : f); }
+        }
+        else if (flags.ContainsKey("question")) { k2.Add("--yesno"); k2.Add(text); if (flags.TryGetValue("ok-label", out var y)) { k2.Add("--yes-label"); k2.Add(y); } if (flags.TryGetValue("cancel-label", out var c)) { k2.Add("--no-label"); k2.Add(c); } }
+        else if (flags.ContainsKey("error")) { k2.Add("--error"); k2.Add(text); }
+        else { k2.Add("--msgbox"); k2.Add(text); }
+        return ([.. k2], false);
+    }
     static async Task<string?> Dialog(params string[] args)
     {
-        try { return (await MediaTools.RunAsync("zenity", args)).TrimEnd('\r', '\n'); }
-        catch (IOException) { return null; } // Cancel and WM close terminate the on-demand client.
+        // zenity on GNOME/Cinnamon/XFCE; kdialog on KDE desktops (Bazzite, Kubuntu, Fedora KDE) that ship without zenity.
+        if (Tool("zenity")) { try { return (await MediaTools.RunAsync("zenity", args)).TrimEnd('\r', '\n'); } catch (IOException) { return null; } }
+        if (Tool("kdialog")) { try { var (kargs, multi) = ToKdialog(args); var raw = (await MediaTools.RunAsync("kdialog", kargs)).TrimEnd('\r', '\n'); return multi ? string.Join('|', raw.Split('"', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(x => x.Length > 0)) : raw; } catch (IOException) { return null; } }
+        try { using var n = Process.Start(new ProcessStartInfo("notify-send") { ArgumentList = { "ZenithClipper", "Install zenity or kdialog to open the ZenithClipper controls." } }); } catch (Exception) { }
+        Console.Error.WriteLine("ZenithClipper needs zenity or kdialog for its controls. Install one with your package manager.");
+        return null;
     }
     public static async Task ShowAsync(string command, string[] args)
     {
