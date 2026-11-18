@@ -232,7 +232,7 @@ public sealed partial class EditorWindow
     {
         if (Environment.GetEnvironmentVariable("ZENITH_FFMPEG") is { Length: > 0 } configured) return configured;
         var name = OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
-        return SearchUp(name, Path.Combine("build", "windows", name), Path.Combine("tools", "ffmpeg", "bin", name), Path.Combine("tools", "mlt-runtime", "package", "Shotcut", name)) ?? name;
+        return SearchUp(name, Path.Combine("windows", name), Path.Combine("build", "windows", name), Path.Combine("tools", "ffmpeg", "bin", name), Path.Combine("tools", "mlt-runtime", "package", "Shotcut", name)) ?? name;
     }
     static string? SearchUp(params string[] relatives)
     {

@@ -354,7 +354,7 @@ public sealed partial class EditorWindow : Window
             return configured;
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
         {
-            foreach (var relative in new[] { name, Path.Combine("build", "windows", name), Path.Combine("tools", "ffmpeg", "bin", name), Path.Combine("tools","mlt-runtime","package","Shotcut",name) })
+            foreach (var relative in new[] { name, Path.Combine("windows", name), Path.Combine("build", "windows", name), Path.Combine("tools", "ffmpeg", "bin", name), Path.Combine("tools","mlt-runtime","package","Shotcut",name) })
             {
                 var candidate = Path.Combine(dir.FullName, relative);
                 if (File.Exists(candidate))
