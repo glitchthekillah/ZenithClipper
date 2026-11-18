@@ -1,0 +1,28 @@
+name: macos
+# Builds the Mac app on its own (no release); the release workflow runs the same script.
+on:
+  workflow_dispatch:
+jobs:
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build
+        run: bash scripts/build-macos.sh 0.0.0 dist
+      - name: Smoke test without Homebrew's copies
+        run: |
+          set -x
+          brew uninstall --ignore-dependencies mlt ffmpeg sdl2 frei0r || true
+          C=dist/ZenithClipper.app/Contents; R=$C/Resources
+          "$R/app/ffmpeg" -hide_banner -version | head -1
+          "$R/app/ffprobe" -hide_banner -version | head -1
+          "$R/app/zenithclipper" config-path
+          DYLD_FALLBACK_LIBRARY_PATH="$R/mlt/lib" timeout 300 "$R/editor/ZenithClipper.Editor" --headless-smoke | tail -5
+          "$R/app/ffmpeg" -hide_banner -f lavfi -i color=s=320x180:r=30 -frames:v 30 -c:v h264_videotoolbox -b:v 2M -f null - 2>&1 | tail -2 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: dist/*.dmg
