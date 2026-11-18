@@ -14,7 +14,7 @@ public sealed class GlobalHotkeys : IDisposable
     {
         thread = new(() =>
         {
-            try { if (OperatingSystem.IsWindows()) WindowsLoop(settings, clip, panel); else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"))) X11Loop(settings, clip, panel); else Error = "On Wayland, bind desktop shortcuts to zenithclipper save and zenithclipper panel."; }
+            try { if (OperatingSystem.IsWindows()) WindowsLoop(settings, clip, panel); else if (OperatingSystem.IsMacOS()) { /* The menu bar app owns the Mac shortcuts. */ } else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"))) X11Loop(settings, clip, panel); else Error = "On Wayland, bind desktop shortcuts to zenithclipper save and zenithclipper panel."; }
             catch (Exception ex) { Error = ex.Message; }
             finally { ready.TrySetResult(); }
         }) { IsBackground = true, Name = "ZenithClipper shortcuts" };

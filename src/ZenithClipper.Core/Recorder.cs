@@ -76,10 +76,12 @@ public sealed class Recorder : IRecorderEngine
             await StopInternalAsync(); settings.Validate(); state = "Starting"; error = null; errorTail = ""; if(!compatibility)notice=null;
             encoder = await MediaTools.ResolveEncoder(settings, ct);
             int fps = settings.Fps;
+            string? macSize = null;
+            if (OperatingSystem.IsMacOS()) { var probe = await MacCapture.ProbeAsync(settings, ct); macSize = probe.Size; if (fps == 0) fps = probe.Hz; }
             if (fps == 0) fps = OperatingSystem.IsWindows() ? WindowsDisplay.RefreshRate(settings.Monitor) : await LinuxRefreshAsync(ct);
             bool crossAdapter=OperatingSystem.IsWindows() && encoder=="nvenc" && !WindowsDisplay.UsesNvidiaAdapter(settings.Monitor);
             if(crossAdapter)notice="NVIDIA hardware encoding is active; frames are transferred from the display GPU.";
-            var capture = settings with { Encoder = encoder, Fps = fps, WindowsCaptureBackend=compatibility||crossAdapter?"desktop-duplication":settings.WindowsCaptureBackend };
+            var capture = settings with { Encoder = encoder, Fps = fps, WindowsCaptureBackend=compatibility||crossAdapter?"desktop-duplication":settings.WindowsCaptureBackend, LinuxVideoSize = macSize ?? settings.LinuxVideoSize };
             await bufferLock.WaitAsync(ct);
             try
             {
@@ -98,12 +100,18 @@ public sealed class Recorder : IRecorderEngine
                     if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 20348)) throw new PlatformNotSupportedException("Application audio exclusion needs Windows build 20348 or newer (Windows 11 recommended).");
                     windowsAudio = new(settings); await windowsAudio.StartAsync(ct); source = windowsAudio.Source;
                 }
+                else if (OperatingSystem.IsMacOS()) source = await MacCapture.CreateAudioFifoAsync(session!, ct);
                 else
                 {
                     linuxAudio = new(settings); await linuxAudio.StartAsync(ct); source = linuxAudio.Source; if (linuxAudio.Notice != null) notice = linuxAudio.Notice;
                 }
             }
             bool wayland = OperatingSystem.IsLinux() && !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"));
+            if (OperatingSystem.IsMacOS())
+            {
+                portal = MacCapture.Start(capture, macSize!, fps, source);
+                portalError = DrainErrorsAsync(portal);
+            }
             if (wayland)
             {
                 string helper = Path.Combine(AppContext.BaseDirectory, "linux", "portal_capture.py");
@@ -114,11 +122,14 @@ public sealed class Recorder : IRecorderEngine
                 ? CaptureCommand.BuildNativeAmfGraph(capture,session,source is null?[]:[source])
                 : OperatingSystem.IsWindows()
                     ? CaptureCommand.Build(capture, "windows", session, source, wayland)
+                    : OperatingSystem.IsMacOS()
+                        ? CaptureCommand.BuildMulti(capture, "mac", session, [.. (source is null ? Array.Empty<string>() : [source]), .. (settings.CaptureMicrophone ? [":default"] : Array.Empty<string>())])
                     : CaptureCommand.BuildMulti(capture, "linux", session, [.. (source is null ? Array.Empty<string>() : [source]), .. (settings.CaptureMicrophone ? ["@DEFAULT_SOURCE@"] : Array.Empty<string>())], wayland);
             if(OperatingSystem.IsWindows())
             {
                 ffmpeg = MediaTools.Start(MediaTools.FindFfmpeg(settings), args, true); captureJob=new(ffmpeg);
             }
+            else if(OperatingSystem.IsMacOS()) ffmpeg = MediaTools.Start(MediaTools.FindFfmpeg(settings), args, true);
             else ffmpeg=MediaTools.Start("python3",new[]{Path.Combine(AppContext.BaseDirectory,"linux","exec_capture.py"),MediaTools.FindFfmpeg(settings)}.Concat(args),true);
             stderrPump = DrainErrorsAsync(ffmpeg);
             capturing=true;

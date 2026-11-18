@@ -26,6 +26,20 @@ internal static class Native
             if(!SetDllDirectoryW(Root))throw new System.ComponentModel.Win32Exception();
             library=NativeLibrary.Load(Path.Combine(Root,"libmlt-7.dll"),typeof(Native).Assembly,DllImportSearchPath.UseDllDirectoryForDependencies|DllImportSearchPath.SafeDirectories);
         }
+        else if(OperatingSystem.IsMacOS())
+        {
+            // The Mac app bundles MLT, its modules, frei0r and SDL under Resources/mlt (lib/, share/).
+            if(Root==null)throw new FileNotFoundException("MLT runtime missing from the app. Reinstall ZenithClipper.");
+            string lib=Path.Combine(Root,"lib");
+            SetEnvironment("MLT_REPOSITORY",Path.Combine(lib,"mlt-7"));
+            SetEnvironment("MLT_DATA",Path.Combine(Root,"share","mlt-7"));
+            SetEnvironment("MLT_PROFILES_PATH",Path.Combine(Root,"share","mlt-7","profiles"));
+            SetEnvironment("FREI0R_PATH",Path.Combine(lib,"frei0r-1"));
+            SetEnvironment("LADSPA_PATH",Path.Combine(lib,"ladspa"));
+            // Load the exact file the bundled modules link to (libmlt-7.N.dylib), never a second copy.
+            string mlt=Directory.GetFiles(lib,"libmlt-7*.dylib").Where(f=>!Path.GetFileName(f).Contains("++",StringComparison.Ordinal)).OrderByDescending(f=>Path.GetFileName(f).Length).FirstOrDefault()??throw new FileNotFoundException("libmlt-7 missing from the app.");
+            library=NativeLibrary.Load(mlt);
+        }
         else library=NativeLibrary.Load("libmlt-7.so.7");
         // These modules discover external devices/plugins or require a Qt application.
         // They will be hosted explicitly when their workflows are implemented, rather than scanned on every launch.
@@ -33,7 +47,7 @@ internal static class Native
         SetEnvironment("MLT_REPOSITORY_DENY",Environment.GetEnvironmentVariable("ZENITHCLIPPER_MLT_OPENCV")=="1"?"libmltdecklink:libmltglaxnimate-qt6:libmltmovit:libmltopenfx:libmltqt6":"libmltdecklink:libmltglaxnimate-qt6:libmltmovit:libmltopencv:libmltopenfx:libmltqt6");
         SetEnvironment("MLT_SLICES","2");
         NativeLibrary.SetDllImportResolver(typeof(Native).Assembly,Resolve);
-        if(FactoryInit(OperatingSystem.IsWindows()?Path.Combine(Root!,"lib","mlt"):null)==0)throw new InvalidOperationException("MLT plugin factory failed to initialize.");
+        if(FactoryInit(OperatingSystem.IsWindows()?Path.Combine(Root!,"lib","mlt"):OperatingSystem.IsMacOS()?Path.Combine(Root!,"lib","mlt-7"):null)==0)throw new InvalidOperationException("MLT plugin factory failed to initialize.");
         LogLevel(16);
         return true;
     }
@@ -41,18 +55,20 @@ internal static class Native
     {
         Environment.SetEnvironmentVariable(name,value);
         if(OperatingSystem.IsWindows()){PutEnvUcrt(name,value??"");PutEnvMsvcrt(name,value??"");}
+        else if(OperatingSystem.IsMacOS())SetEnvMac(name,value??"",1);
     }
     [DllImport("ucrtbase.dll",EntryPoint="_putenv_s",CallingConvention=CallingConvention.Cdecl)]static extern int PutEnvUcrt([MarshalAs(UnmanagedType.LPUTF8Str)]string name,[MarshalAs(UnmanagedType.LPUTF8Str)]string value);
     [DllImport("msvcrt.dll",EntryPoint="_putenv_s",CallingConvention=CallingConvention.Cdecl)]static extern int PutEnvMsvcrt([MarshalAs(UnmanagedType.LPUTF8Str)]string name,[MarshalAs(UnmanagedType.LPUTF8Str)]string value);
+    [DllImport("libc",EntryPoint="setenv",CallingConvention=CallingConvention.Cdecl)]static extern int SetEnvMac([MarshalAs(UnmanagedType.LPUTF8Str)]string name,[MarshalAs(UnmanagedType.LPUTF8Str)]string value,int overwrite);
     [DllImport("kernel32.dll",CharSet=CharSet.Unicode,SetLastError=true)]static extern bool SetDllDirectoryW(string directory);
-    static nint Resolve(string name,Assembly assembly,DllImportSearchPath? search)=>name==Lib?library:name=="zenith_sdl"?NativeLibrary.Load(OperatingSystem.IsWindows()?Path.Combine(Root!,"SDL2.dll"):"libSDL2-2.0.so.0"):0;
+    static nint Resolve(string name,Assembly assembly,DllImportSearchPath? search)=>name==Lib?library:name=="zenith_sdl"?NativeLibrary.Load(OperatingSystem.IsWindows()?Path.Combine(Root!,"SDL2.dll"):OperatingSystem.IsMacOS()?Path.Combine(Root!,"lib","libSDL2-2.0.0.dylib"):"libSDL2-2.0.so.0"):0;
     static string? FindRoot()
     {
         string? explicitRoot=Environment.GetEnvironmentVariable("ZENITHCLIPPER_MLT_ROOT");
         if(!string.IsNullOrWhiteSpace(explicitRoot))return Path.GetFullPath(explicitRoot);
         for(var d=new DirectoryInfo(AppContext.BaseDirectory);d!=null;d=d.Parent)
             foreach(string candidate in new[]{Path.Combine(d.FullName,"mlt"),Path.Combine(d.FullName,"tools","mlt-runtime","package","Shotcut")})
-                if(File.Exists(Path.Combine(candidate,"libmlt-7.dll")))return candidate;
+                if(File.Exists(Path.Combine(candidate,"libmlt-7.dll"))||(Directory.Exists(Path.Combine(candidate,"lib"))&&Directory.GetFiles(Path.Combine(candidate,"lib"),"libmlt-7*.dylib").Length>0))return candidate;
         return null;
     }
     [DllImport(Lib,EntryPoint="mlt_factory_init",CallingConvention=CallingConvention.Cdecl)] internal static extern nint FactoryInit([MarshalAs(UnmanagedType.LPUTF8Str)]string? directory);

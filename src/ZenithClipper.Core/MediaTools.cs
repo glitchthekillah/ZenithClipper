@@ -9,8 +9,12 @@ public static class MediaTools
     public static string FindFfmpeg(Settings s)
     {
         if (!string.IsNullOrWhiteSpace(s.FfmpegPath)) return s.FfmpegPath;
-        var local = Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg");
-        return File.Exists(local) ? local : "ffmpeg";
+        string name = OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
+        var local = Path.Combine(AppContext.BaseDirectory, name);
+        if (File.Exists(local)) return local;
+        // The Mac editor lives beside the engine and uses its bundled FFmpeg (GUI apps get no Homebrew PATH).
+        var engine = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "app", name));
+        return File.Exists(engine) ? engine : "ffmpeg";
     }
     public static Process Start(string executable, IEnumerable<string> args, bool stdin = false)
     {
@@ -38,7 +42,7 @@ public static class MediaTools
     public static async Task<string> ResolveEncoder(Settings s, CancellationToken ct)
     {
         if (s.Encoder != "auto") return s.Encoder;
-        var candidates = OperatingSystem.IsWindows() ? EncoderSelection.WindowsCandidates(WindowsDisplay.PreferredEncoder(s.Monitor)) : new[] { "vaapi", "nvenc", "qsv" };
+        var candidates = OperatingSystem.IsWindows() ? EncoderSelection.WindowsCandidates(WindowsDisplay.PreferredEncoder(s.Monitor)) : OperatingSystem.IsMacOS() ? new[] { "videotoolbox" } : new[] { "vaapi", "nvenc", "qsv" };
         foreach (string encoder in candidates)
         {
             var trial = s with { Encoder = encoder };

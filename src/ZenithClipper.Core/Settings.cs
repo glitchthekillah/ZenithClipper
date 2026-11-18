@@ -22,7 +22,7 @@ public sealed record Settings
     public int VolumeFor(string app) => AppVolumes.TryGetValue(AudioPolicy.Normalize(app), out int v) ? v : 100;
     /// <summary>Per-app capture is needed when any app is excluded or has a non-default level.</summary>
     public bool NeedsPerAppAudio => ExcludedApps.Length > 0 || AppVolumes.Values.Any(v => v != 100);
-    public string ClipDirectory { get; init; } = Path.Combine(AppPaths.Root, "clips");
+    public string ClipDirectory { get; init; } = OperatingSystem.IsMacOS() ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Movies", "ZenithClipper") : Path.Combine(AppPaths.Root, "clips");
     public string FfmpegPath { get; init; } = "";
     /// <summary>X display to record; empty follows $DISPLAY (falls back to :0).</summary>
     public string LinuxDisplay { get; init; } = "";
@@ -40,7 +40,7 @@ public sealed record Settings
         if (Fps is < 0 or > 1000 || Fps == 1) throw new ArgumentException("FPS must be 0 (display refresh) or 2–1000.");
         if (OutputWidth < 0 || OutputWidth > 16384 || OutputWidth % 2 != 0) throw new ArgumentException("Output width must be 0 (native) or an even number up to 16384.");
         if (Quality is < 0 or > 51 || Monitor is < 0 or > 32) throw new ArgumentException("Invalid quality or monitor index.");
-        if (!new[] { "auto", "nvenc", "qsv", "amf", "vaapi", "software" }.Contains(Encoder)) throw new ArgumentException("Unknown encoder.");
+        if (!new[] { "auto", "nvenc", "qsv", "amf", "vaapi", "videotoolbox", "software" }.Contains(Encoder)) throw new ArgumentException("Unknown encoder.");
         if(WindowsCaptureBackend is not ("auto" or "desktop-duplication")) throw new ArgumentException("Unknown Windows capture backend.");
         if (string.IsNullOrWhiteSpace(ClipDirectory)) throw new ArgumentException("Choose a clip directory.");
         if (AppVolumes is null || AppVolumes.Count > 64 || AppVolumes.Any(x => string.IsNullOrWhiteSpace(x.Key) || x.Key.Length > 128 || x.Value is < 0 or > 200)) throw new ArgumentException("App volumes must be 0–200% for at most 64 apps.");
