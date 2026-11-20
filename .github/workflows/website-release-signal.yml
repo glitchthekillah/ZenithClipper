@@ -1,0 +1,11 @@
+name: Stable release published
+on:
+  release:
+    types: [published]
+permissions: {}
+jobs:
+  signal:
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "A stable release was published."

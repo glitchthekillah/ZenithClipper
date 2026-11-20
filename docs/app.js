@@ -334,10 +334,3 @@ ScrollTrigger.batch('#vs .c', { start: 'top 90%', onEnter: (b) => gsap.from(b, {
 gsap.fromTo('#get .giant', { xPercent: 10 }, { xPercent: -10, ease: 'none', scrollTrigger: { trigger: '#get', start: 'top bottom', end: 'bottom top', scrub: 1 } });
 addEventListener('load', () => { fitAll(); ScrollTrigger.refresh(); });
 })();
-
-/* Direct download links from the latest GitHub release; the release page stays as the fallback. */
-fetch('https://api.github.com/repos/glitchthekillah/ZenithClipper/releases/latest').then((r) => r.ok ? r.json() : null).then((rel) => {
-  if (!rel) return;
-  $$('[data-asset]').forEach((a) => { const f = rel.assets.find((x) => x.name.endsWith(a.dataset.asset)); if (f) a.href = f.browser_download_url; });
-  $('#dl-ver').textContent = `Version ${rel.tag_name.replace(/^v/, '')}`;
-}).catch(() => {});
