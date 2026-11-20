@@ -16,6 +16,9 @@ public sealed record Settings
     public bool CaptureAudio { get; init; } = true;
     /// <summary>Linux: mix the default microphone into clips.</summary>
     public bool CaptureMicrophone { get; init; }
+    public string LinuxPlaybackDevice { get; init; } = "";
+    public bool ClipSaveSound { get; init; } = true;
+    public string ClipSaveSoundId { get; init; } = ZenithClipper.ClipSaveSound.DefaultId;
     public string[] ExcludedApps { get; init; } = ["Spotify"];
     /// <summary>Per-app level in clips, in percent (0–200). Apps not listed record at 100%. Applied live.</summary>
     public Dictionary<string, int> AppVolumes { get; init; } = new(StringComparer.OrdinalIgnoreCase);
@@ -61,7 +64,7 @@ public static class SettingsChanges
         {
             ClipSeconds = next.ClipSeconds, BufferSeconds = next.BufferSeconds, MaxBufferMiB = next.MaxBufferMiB,
             ClipDirectory = next.ClipDirectory, ClipHotkey = next.ClipHotkey, PanelHotkey = next.PanelHotkey,
-            AutoStartCapture = next.AutoStartCapture, ExcludedApps = sameApps ? next.ExcludedApps : current.ExcludedApps, AppVolumes = next.AppVolumes,
+            AutoStartCapture = next.AutoStartCapture, ClipSaveSound = next.ClipSaveSound, ClipSaveSoundId = next.ClipSaveSoundId, LinuxPlaybackDevice = next.LinuxPlaybackDevice, ExcludedApps = sameApps ? next.ExcludedApps : current.ExcludedApps, AppVolumes = next.AppVolumes,
         };
         return live != next;
     }

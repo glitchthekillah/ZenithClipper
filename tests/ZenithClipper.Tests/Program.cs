@@ -98,6 +98,59 @@ var tests = new (string, Action)[] {
         using var input=new MemoryStream(packets);Equal(188L*3,TsSnapshot.SafeLength(input,packets.Length));
     }),
     ("clip length and shortcuts change without resetting the buffer",()=>{var a=new Settings();Equal(false,SettingsChanges.RequiresRestart(a,a with{ClipSeconds=60,BufferSeconds=600,MaxBufferMiB=4096,ClipHotkey="Ctrl+Alt+K",PanelHotkey="Ctrl+Shift+M",ClipDirectory="x",ExcludedApps=["spotify"]}));}),
+    ("Linux playback defaults to following the system and persists a pinned device",()=>{var a=new Settings();Equal("",a.LinuxPlaybackDevice);var b=a with{LinuxPlaybackDevice="bluez_output.test",ClipSaveSound=false};Equal(false,SettingsChanges.RequiresRestart(a,b));Equal(b.LinuxPlaybackDevice,System.Text.Json.JsonSerializer.Deserialize(System.Text.Json.JsonSerializer.Serialize(b,CoreJsonContext.Default.Settings),CoreJsonContext.Default.Settings)!.LinuxPlaybackDevice);}),
+    ("clip save sound defaults to Amber and persists without restarting capture", () =>
+    {
+        var defaults = System.Text.Json.JsonSerializer.Deserialize("{}", CoreJsonContext.Default.Settings)!;
+        Equal(true, defaults.ClipSaveSound);
+        Equal("01-amber", defaults.ClipSaveSoundId);
+        Equal(10, ClipSaveSound.SoundIds.Count);
+        var selected = defaults with { ClipSaveSoundId = "10-pebble" };
+        var json = System.Text.Json.JsonSerializer.Serialize(selected, CoreJsonContext.Default.Settings);
+        Equal("10-pebble", System.Text.Json.JsonSerializer.Deserialize(json, CoreJsonContext.Default.Settings)!.ClipSaveSoundId);
+        Equal("01-amber", ClipSaveSound.NormalizeId("../unknown"));
+        Equal(false, SettingsChanges.RequiresRestart(defaults, selected));
+    }),
+    ("Linux playback follows device changes without replacing the capture sink", () =>
+    {
+        var output = "speakers";
+        var commands = new List<string[]>();
+        var moduleId = 0;
+        var captureSink = "zenithclipper_" + Environment.ProcessId;
+        Task<string> Pactl(CancellationToken _, string[] args)
+        {
+            commands.Add(args);
+            return Task.FromResult(args[0] switch
+            {
+                "get-default-sink" => output,
+                "load-module" => (++moduleId).ToString(),
+                "-f" when args[^1] == "sinks" =>
+                    $$"""[{"name":"{{captureSink}}","description":"ZenithClipperCapture","index":3}]""",
+                "-f" => "[]",
+                "unload-module" => "",
+                _ => throw new InvalidOperationException(string.Join(" ", args))
+            });
+        }
+
+        async Task ExerciseAsync()
+        {
+            await using var audio = new LinuxAudio(new Settings(), Pactl);
+            await audio.StartAsync();
+            var source = audio.Source;
+            Equal("speakers", audio.PlaybackDevice);
+            output = "bluez_headphones";
+            await audio.RefreshAsync();
+            Equal("bluez_headphones", audio.PlaybackDevice);
+            output = "speakers";
+            await audio.RefreshAsync();
+            Equal("speakers", audio.PlaybackDevice);
+            Equal(source, audio.Source);
+            Equal(1, commands.Count(args => args.Length > 1 && args[1] == "module-null-sink"));
+            Equal("sink=speakers,sink=bluez_headphones,sink=speakers", string.Join(",", commands
+                .Where(args => args.Length > 1 && args[1] == "module-loopback").Select(args => args[3])));
+        }
+        ExerciseAsync().GetAwaiter().GetResult();
+    }),
     ("capture and audio changes still restart capture",()=>{var a=new Settings();Equal(true,SettingsChanges.RequiresRestart(a,a with{Fps=30}));Equal(true,SettingsChanges.RequiresRestart(a,a with{ExcludedApps=["Spotify","Discord"]}));Equal(true,SettingsChanges.RequiresRestart(a,a with{Encoder="software"}));}),
     ("audio startup discards samples queued before the video connection",()=>{var ring=new PcmRing();ring.Write([1,0,2,0],4);ring.Clear();short[] output=[9,9];ring.Read(output);Equal("0,0",string.Join(',',output));}),
 };

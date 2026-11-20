@@ -126,7 +126,9 @@ public sealed class NativeRecorder(Settings initialSettings) : IRecorderEngine
                 }
             }
             Directory.CreateDirectory(settings.ClipDirectory);string destination=Path.Combine(settings.ClipDirectory,$"Clip-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}-{Guid.NewGuid().ToString("N")[..6]}.mp4");
-            ReplayExport result=await Task.Run(()=>writer.ExportNewest(destination,duration,ct),ct);lastClip=result.Path;return result.Path;
+            ReplayExport result=await Task.Run(()=>writer.ExportNewest(destination,duration,ct),ct);lastClip = result.Path;
+            ClipSaveSound.Play(settings);
+            return result.Path;
         }
         finally{saves.Release();}
     }

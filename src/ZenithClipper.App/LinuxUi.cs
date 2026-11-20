@@ -63,7 +63,7 @@ static class LinuxUi
         while (true)
         {
             var response = await Control.SendAsync(new("status")); var status = response.Status;
-            var choice = await Dialog("--list", "--title=ZenithClipper controls", $"--text={status?.State} — {status?.BufferedSeconds:F1}s buffered\n{status?.Error}", "--column=Action", "Save clip", "Pause capture", "Resume capture", "Settings", "Clip folder", "Microphone in clips", "Startup", "Keyboard shortcuts", "Check for updates", "Open editor", "Open clips", "Quit engine", "--height=480", "--width=600");
+            var choice = await Dialog("--list", "--title=ZenithClipper controls", $"--text={status?.State} — {status?.BufferedSeconds:F1}s buffered\n{status?.Error}", "--column=Action", "Save clip", "Pause capture", "Resume capture", "Settings", "Clip folder", "Microphone in clips", "Playback device", "Clip save sound", "Default clip save sound", "Startup", "Keyboard shortcuts", "Check for updates", "Open editor", "Open clips", "Quit engine", "--height=480", "--width=600");
             if (choice == null) return;
             try
             {
@@ -75,6 +75,9 @@ static class LinuxUi
                     case "Settings": await ConfigureAsync(); break;
                     case "Clip folder": await ConfigureFolderAsync(); break;
                     case "Microphone in clips": await ConfigureMicAsync(); break;
+                    case "Playback device": await ConfigurePlaybackAsync(); break;
+                    case "Clip save sound": await ConfigureSaveSoundAsync(); break;
+                    case "Default clip save sound": await ConfigureSoundChoiceAsync(); break;
                     case "Startup": await ConfigureStartupAsync(); break;
                     case "Keyboard shortcuts": await ConfigureShortcutsAsync(); break;
                     case "Check for updates": await UpdateAsync(); break;
@@ -122,6 +125,43 @@ static class LinuxUi
         if (string.IsNullOrWhiteSpace(dir)) return;
         Check(await Control.SendAsync(new("configure", Settings: s with { ClipDirectory = dir.Trim() })));
     }
+    static async Task ConfigurePlaybackAsync()
+    {
+        var response = await Control.SendAsync(new("settings")); Check(response); var settings = response.Settings!;
+        const string follow = "Follow system default";
+        var devices = await LinuxAudio.PlaybackDevicesAsync();
+        var choices = new Dictionary<string, string> { [follow] = "" };
+        foreach (var (name, label) in devices) choices[$"{label} ({name})"] = name;
+        if (!choices.ContainsValue(settings.LinuxPlaybackDevice))
+            choices[$"{settings.LinuxPlaybackDevice} (disconnected)"] = settings.LinuxPlaybackDevice;
+        var selected = await Dialog(["--list", "--radiolist", "--title=Playback device", "--column=", "--column=Output",
+            .. choices.SelectMany(choice => new[] { choice.Value == settings.LinuxPlaybackDevice ? "TRUE" : "FALSE", choice.Key }),
+            "--width=600", "--height=300"]);
+        if (selected != null && choices.TryGetValue(selected, out var device) && device != settings.LinuxPlaybackDevice)
+            Check(await Control.SendAsync(new("configure", Settings: settings with { LinuxPlaybackDevice = device })));
+    }
+
+    static async Task ConfigureSaveSoundAsync()
+    {
+        var response = await Control.SendAsync(new("settings")); Check(response); var settings = response.Settings!;
+        var selected = await Dialog("--list", "--radiolist", "--title=Clip save sound", "--column=", "--column=Sound",
+            settings.ClipSaveSound ? "TRUE" : "FALSE", "On", settings.ClipSaveSound ? "FALSE" : "TRUE", "Off");
+        if (selected is "On" or "Off")
+            Check(await Control.SendAsync(new("configure", Settings: settings with { ClipSaveSound = selected == "On" })));
+    }
+
+    static async Task ConfigureSoundChoiceAsync()
+    {
+        var response = await Control.SendAsync(new("settings")); Check(response); var settings = response.Settings!;
+        var current = ClipSaveSound.NormalizeId(settings.ClipSaveSoundId);
+        var choices = ClipSaveSound.SoundIds.ToDictionary(ClipSaveSound.DisplayName);
+        var selected = await Dialog(["--list", "--radiolist", "--title=Default clip save sound", "--column=", "--column=Sound",
+            .. choices.SelectMany(choice => new[] { choice.Value == current ? "TRUE" : "FALSE", choice.Key }),
+            "--width=400", "--height=440"]);
+        if (selected != null && choices.TryGetValue(selected, out var id) && id != current)
+            Check(await Control.SendAsync(new("configure", Settings: settings with { ClipSaveSoundId = id })));
+    }
+
     static async Task ConfigureMicAsync()
     {
         var r = await Control.SendAsync(new("settings")); Check(r); var s = r.Settings!;

@@ -265,7 +265,10 @@ public sealed class Recorder : IRecorderEngine
                 snapshot = new ReplaySnapshot(selected, Path.Combine(AppPaths.Root, "exports"),catalog?.UnfinishedPath);
             }
             finally { bufferLock.Release(); }
-            lastClip = await snapshot.SaveAsync(settings, duration, ct);notice=null;return lastClip;
+            lastClip = await snapshot.SaveAsync(settings, duration, ct);
+            notice = null;
+            ClipSaveSound.Play(settings, linuxAudio?.PlaybackDevice);
+            return lastClip;
         }
         finally { snapshot?.Dispose(); saves.Release(); }
     }
@@ -276,7 +279,12 @@ public sealed class Recorder : IRecorderEngine
         {
             // Clip length, history limits, folder and shortcuts are read live; keep the replay history.
             await lifecycle.WaitAsync(ct);
-            try { AppPaths.Save(value); settings = value; }
+            try
+            {
+                AppPaths.Save(value);
+                settings = value;
+                if (linuxAudio != null) linuxAudio.PreferredPlaybackDevice = value.LinuxPlaybackDevice;
+            }
             finally { lifecycle.Release(); }
             return;
         }

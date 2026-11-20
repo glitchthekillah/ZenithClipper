@@ -354,6 +354,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let settings = config().1
         let mic = add(menu, "Microphone in clips", #selector(toggleMic(_:)))
         mic.state = (field(settings, "CaptureMicrophone") as? Bool ?? false) ? .on : .off
+        let sound = add(menu, "Clip save sound", #selector(toggleSaveSound(_:)))
+        sound.state = (field(settings, "ClipSaveSound") as? Bool ?? true) ? .on : .off
+        let choice = NSMenuItem(title: "Default clip save sound", action: nil, keyEquivalent: "")
+        let soundMenu = NSMenu()
+        let soundIds = ["01-amber", "02-bloom", "03-cedar", "04-daylight", "05-ember", "06-fern", "07-halo", "08-linen", "09-morning", "10-pebble"]
+        let storedSound = field(settings, "ClipSaveSoundId") as? String ?? ""
+        let currentSound = soundIds.contains(storedSound) ? storedSound : soundIds[0]
+        for (index, id) in soundIds.enumerated() {
+            let name = String(id.dropFirst(3)).capitalized
+            let option = add(soundMenu, "\(index + 1). \(name)", #selector(chooseSaveSound(_:)))
+            option.representedObject = id
+            option.state = id == currentSound ? .on : .off
+        }
+        choice.submenu = soundMenu
+        menu.addItem(choice)
         add(menu, "Clip folder…", #selector(chooseFolder(_:)))
         add(menu, "Open clips folder", #selector(openFolder(_:)))
         add(menu, "Open editor", #selector(openEditor(_:)))
@@ -375,12 +390,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         DispatchQueue.global().async {
             let (code, output) = cli(seconds > 0 ? ["save", "\(seconds)"] : ["save"])
             DispatchQueue.main.async {
-                NSSound(named: code == 0 ? "Glass" : "Basso")?.play()
-                if code != 0 { self.alert("Couldn't save the clip", output) }
+                if code != 0 {
+                    NSSound(named: "Basso")?.play()
+                    self.alert("Couldn't save the clip", output)
+                }
             }
         }
     }
     @objc func toggleRecording(_ sender: NSMenuItem) { let command = sender.tag == 1 ? "pause" : "resume"; DispatchQueue.global().async { _ = cli([command]) } }
+    @objc func chooseSaveSound(_ sender: NSMenuItem) {
+        if let id = sender.representedObject as? String { update("ClipSaveSoundId", id) }
+    }
+    @objc func toggleSaveSound(_ sender: NSMenuItem) { update("ClipSaveSound", sender.state != .on) }
     @objc func toggleMic(_ sender: NSMenuItem) { update("CaptureMicrophone", sender.state != .on) }
     @objc func chooseFolder(_ sender: Any?) {
         NSApp.activate(ignoringOtherApps: true)
