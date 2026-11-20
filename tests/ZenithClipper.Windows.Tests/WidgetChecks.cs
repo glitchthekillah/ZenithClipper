@@ -96,6 +96,28 @@ static class WidgetChecks
             Console.WriteLine("PASS rail header blocks settings until settings and status are ready");
         }
         catch(Exception ex){failed++;Console.WriteLine("FAIL startup readiness: "+ex);}
+        var folder = Path.Combine(Path.GetTempPath(), "zc-recent-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(folder);
+            using var recent = new RecentList();
+            var settings = new ZenithClipper.Settings { ClipDirectory = folder, FfmpegPath = Path.Combine(folder, "missing-ffmpeg.exe") };
+            var counts = new List<int>();
+            recent.Counted += (_, _, total, _) => counts.Add(total);
+            recent.RefreshClips(settings, null);
+            string clip = Path.Combine(folder, "Clip-hotkey.mp4");
+            File.WriteAllBytes(clip, [0]);
+            recent.RefreshClips(settings, clip);
+            recent.RefreshClips(settings, clip);
+            string secondFolder = Path.Combine(folder, "other");
+            Directory.CreateDirectory(secondFolder);
+            recent.RefreshClips(settings with { ClipDirectory = secondFolder }, clip);
+            if (!counts.SequenceEqual([0, 1, 0]))
+                throw new Exception("The recent list did not refresh exactly once per save or folder change.");
+            Console.WriteLine("PASS recent clips refresh after an external save and a folder change");
+        }
+        catch (Exception ex) { failed++; Console.WriteLine("FAIL recent clips: " + ex); }
+        finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
         return failed;
     }
     static IEnumerable<Control> Descendants(Control root){foreach(Control c in root.Controls){yield return c;foreach(var d in Descendants(c))yield return d;}}

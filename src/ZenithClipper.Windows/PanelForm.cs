@@ -387,7 +387,6 @@ public sealed class PanelForm : Form
             var response = await EngineClient.SendAsync(new("save", seconds));
             string path = response.Path ?? "";
             ShowToast($"Saved {Theme.Span(seconds)} clip  ·  {Path.GetFileName(path)}", Banner.Tone.Success, "Edit", () => EngineClient.Editor(path));
-            await recent.LoadAsync(settings);
         }
         finally { save.Enabled = true; UpdateSaveText(); }
     }
@@ -718,7 +717,6 @@ public sealed class PanelForm : Form
             offline = false;
             await PollAsync(); poll.Start();
             _ = RefreshAudioAsync();
-            await recent.LoadAsync(settings);
         }
         catch (Exception ex) when (ex is IOException or TimeoutException or InvalidOperationException or System.ComponentModel.Win32Exception)
         {
@@ -781,6 +779,7 @@ public sealed class PanelForm : Form
             if (status.Error != null && status.Error != lastError)
                 ShowToast(Friendly(status.Error), Banner.Tone.Error, "Retry", async () => await Guard(async () => { await EngineClient.SendAsync(new("resume")); await PollAsync(); }));
             lastError = status.Error;
+            recent.RefreshClips(settings, status.LastClip);
             lengths.Invalidate();
             if (++audioTick % 3 == 0 && railWidget.Visible) _ = RefreshAudioAsync();
             perf.Sample(status!); tiles.SetPerf(perf.Cpu, perf.Memory);
@@ -1286,6 +1285,7 @@ sealed class RecentList : Control, IMeasured
     readonly List<(Rectangle Box, Rectangle RevealBox, string Path)> rows = [];
     int hover = -1;
     CancellationTokenSource? loading;
+    string? loadedFolder, loadedLastClip;
     public event Action<string?>? Open;
     public event Action<string>? Reveal;
     /// <summary>Raised after a load with clips saved today (count, bytes) and the folder total (count, bytes).</summary>
@@ -1297,32 +1297,69 @@ sealed class RecentList : Control, IMeasured
     int CellW(int width) => (width - Theme.S(10)) / Columns;
     int CellH(int width) => (int)(CellW(width) * 9 / 16f) + Theme.S(48);
     public int MeasureHeight(int width) => clips.Count == 0 ? Theme.S(230) : (clips.Count + Columns - 1) / Columns * (CellH(width) + Theme.S(10));
-    public async Task LoadAsync(Settings settings)
+    public void RefreshClips(Settings settings, string? lastSavedClip)
     {
-        loading?.Cancel(); var cts = loading = new CancellationTokenSource();
-        foreach (var c in clips) c.Thumb?.Dispose();
-        clips.Clear();
-        int today = 0, total = 0; long todayBytes = 0, totalBytes = 0;
-        if (Directory.Exists(settings.ClipDirectory))
+        if (IsDisposed || (loadedFolder == settings.ClipDirectory && loadedLastClip == lastSavedClip)) return;
+
+        (string Path, DateTime When, long Size, Bitmap? Thumb)[] files;
+        try
         {
-            var files = new DirectoryInfo(settings.ClipDirectory).EnumerateFiles("*.mp4").Where(f => !f.Name.StartsWith('.')).ToList();
-            foreach (var f in files) { total++; totalBytes += f.Length; if (f.LastWriteTime.Date == DateTime.Today) { today++; todayBytes += f.Length; } }
-            foreach (var f in files.OrderByDescending(f => f.LastWriteTimeUtc).Take(12)) clips.Add((f.FullName, f.LastWriteTime, f.Length, null));
+            files = Directory.Exists(settings.ClipDirectory)
+                ? new DirectoryInfo(settings.ClipDirectory).EnumerateFiles("*.mp4")
+                    .Where(file => !file.Name.StartsWith('.'))
+                    .Select(file => (file.FullName, file.LastWriteTime, file.Length, (Bitmap?)null))
+                    .OrderByDescending(file => file.LastWriteTime.ToUniversalTime())
+                    .ToArray()
+                : [];
         }
-        Counted?.Invoke(today, todayBytes, total, totalBytes);
-        Parent?.PerformLayout(); Invalidate();
-        for (int i = 0; i < clips.Count; i++)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            try
+            // A removable folder or file can disappear during the scan. Keep the previous list and try again.
+            return;
+        }
+
+        loadedFolder = settings.ClipDirectory;
+        loadedLastClip = lastSavedClip;
+        loading?.Cancel();
+        var cts = loading = new CancellationTokenSource();
+        foreach (var clip in clips) clip.Thumb?.Dispose();
+        clips.Clear();
+        clips.AddRange(files.Take(12));
+        rows.Clear();
+        hover = -1;
+
+        var day = DateTime.Today;
+        var today = files.Where(file => file.When.Date == day).ToArray();
+        Counted?.Invoke(today.Length, today.Sum(file => file.Size), files.Length, files.Sum(file => file.Size));
+        Parent?.PerformLayout();
+        Invalidate();
+        _ = LoadThumbnailsAsync(settings, cts);
+    }
+
+    async Task LoadThumbnailsAsync(Settings settings, CancellationTokenSource cts)
+    {
+        try
+        {
+            for (int i = 0; i < clips.Count && !cts.IsCancellationRequested; i++)
             {
-                var thumb = await Frames.ThumbnailAsync(settings, clips[i].Path, cts.Token);
-                if (cts.IsCancellationRequested) { thumb?.Dispose(); return; }
-                clips[i] = clips[i] with { Thumb = thumb }; Invalidate();
+                try
+                {
+                    var thumb = await Frames.ThumbnailAsync(settings, clips[i].Path, cts.Token);
+                    if (cts.IsCancellationRequested) { thumb?.Dispose(); return; }
+                    clips[i] = clips[i] with { Thumb = thumb };
+                    Invalidate();
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or JsonException or System.ComponentModel.Win32Exception) { }
             }
-            catch (Exception ex) when (ex is IOException or InvalidOperationException or System.Text.Json.JsonException or System.ComponentModel.Win32Exception) { }
-            catch (OperationCanceledException) { return; }
+        }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested) { }
+        finally
+        {
+            if (ReferenceEquals(loading, cts)) loading = null;
+            cts.Dispose();
         }
     }
+
     protected override void OnMouseMove(MouseEventArgs e) { base.OnMouseMove(e); int h = rows.FindIndex(r => r.Box.Contains(e.Location)); if (h != hover) { hover = h; Invalidate(); } Cursor = h >= 0 ? Cursors.Hand : Cursors.Default; }
     protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); hover = -1; Invalidate(); }
     protected override void OnMouseClick(MouseEventArgs e)
