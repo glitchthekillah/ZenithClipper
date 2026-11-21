@@ -151,6 +151,20 @@ var tests = new (string, Action)[] {
         }
         ExerciseAsync().GetAwaiter().GetResult();
     }),
+    ("Windows microphone and output choices persist and require a fresh capture", () =>
+    {
+        var defaults = System.Text.Json.JsonSerializer.Deserialize("{}", CoreJsonContext.Default.Settings)!;
+        Equal(false, defaults.CaptureMicrophone);
+        Equal("", defaults.WindowsInputDevice);
+        Equal("", defaults.WindowsOutputDevice);
+        var configured = defaults with { CaptureMicrophone = true, WindowsInputDevice = "{mic}", WindowsOutputDevice = "{speakers}" };
+        var json = System.Text.Json.JsonSerializer.Serialize(configured, CoreJsonContext.Default.Settings);
+        var restored = System.Text.Json.JsonSerializer.Deserialize(json, CoreJsonContext.Default.Settings)!;
+        Equal(true, restored.CaptureMicrophone);
+        Equal(configured.WindowsInputDevice, restored.WindowsInputDevice);
+        Equal(configured.WindowsOutputDevice, restored.WindowsOutputDevice);
+        Equal(true, SettingsChanges.RequiresRestart(defaults, restored));
+    }),
     ("capture and audio changes still restart capture",()=>{var a=new Settings();Equal(true,SettingsChanges.RequiresRestart(a,a with{Fps=30}));Equal(true,SettingsChanges.RequiresRestart(a,a with{ExcludedApps=["Spotify","Discord"]}));Equal(true,SettingsChanges.RequiresRestart(a,a with{Encoder="software"}));}),
     ("audio startup discards samples queued before the video connection",()=>{var ring=new PcmRing();ring.Write([1,0,2,0],4);ring.Clear();short[] output=[9,9];ring.Read(output);Equal("0,0",string.Join(',',output));}),
 };

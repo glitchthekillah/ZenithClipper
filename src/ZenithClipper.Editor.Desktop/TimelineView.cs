@@ -238,15 +238,17 @@ public sealed partial class EditorWindow
             };
         }
 
-        readonly Border playheadLine = new() { Width = 1, Background = AccentBrush, IsHitTestVisible = false };
-        readonly Border playheadHead = new() { Width = 11, Height = 12, Background = AccentBrush, CornerRadius = new CornerRadius(2, 2, 6, 6), IsHitTestVisible = false };
+        readonly Border playheadLine = new() { Width = 1, Background = AccentBrush, IsHitTestVisible = false, RenderTransform = new TranslateTransform() };
+        readonly Border playheadHead = new() { Width = 11, Height = 12, Background = AccentBrush, CornerRadius = new CornerRadius(2, 2, 6, 6), IsHitTestVisible = false, RenderTransform = new TranslateTransform() };
         public void UpdatePlayhead()
         {
             if (!Children.Contains(playheadLine)) Children.Add(playheadLine);
             if (!Children.Contains(playheadHead)) Children.Add(playheadHead);
             playheadLine.Height = Height;
-            SetLeft(playheadLine, owner.ProgramPlayhead * PixelsPerFrame); SetTop(playheadLine, 0);
-            SetLeft(playheadHead, owner.ProgramPlayhead * PixelsPerFrame - 5); SetTop(playheadHead, 0);
+            // Moving the overlay at render time avoids arranging the clip canvas every frame.
+            double x = owner.ProgramPlayhead * PixelsPerFrame;
+            ((TranslateTransform)playheadLine.RenderTransform!).X = x;
+            ((TranslateTransform)playheadHead.RenderTransform!).X = x - 5;
         }
 
         (EditTrack Track, TimelineClip? Clip)? HitTest(Point p)

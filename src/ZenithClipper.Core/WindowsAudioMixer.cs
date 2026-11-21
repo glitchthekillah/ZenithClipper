@@ -16,8 +16,10 @@ public sealed class WindowsAudioMixer : IAsyncDisposable
     readonly object sync = new();
     Task? writer;
     WindowsAudio? allAudio;
+    ProcessLoopbackCapture? microphone, output;
+    readonly PcmRing microphoneRing = new(), outputRing = new();
     public string Source { get; private set; }
-    public bool Faulted => writer?.IsFaulted == true || allAudio?.Completion.IsFaulted == true || sources.Values.Any(x => x.capture.Completion.IsFaulted);
+    public bool Faulted => writer?.IsFaulted == true || allAudio?.Completion.IsFaulted == true || microphone?.Faulted == true || output?.Faulted == true || sources.Values.Any(x => x.capture.Completion.IsFaulted);
     public WindowsAudioMixer(Settings settings)
     {
         this.settings = settings; string name = "ZenithClipper-mix-" + Guid.NewGuid().ToString("N"); Source = @"\\.\pipe\" + name;
@@ -25,23 +27,38 @@ public sealed class WindowsAudioMixer : IAsyncDisposable
     }
     public async Task StartAsync(CancellationToken ct)
     {
-        if (settings.ExcludedApps.Length == 0)
+        if (settings.CaptureMicrophone)
         {
-            // Fastest mode when no filtering was requested: one process-loopback capture.
-            allAudio = new(0); await allAudio.WaitReadyAsync(ct); Source = allAudio.Source; return;
+            microphone = new(settings.WindowsInputDevice, true, microphoneRing.Write);
+            await microphone.Ready.WaitAsync(TimeSpan.FromSeconds(10), ct);
         }
-        await RefreshAsync(ct); writer = Task.Run(WriteAsync);
+        if (settings.CaptureAudio && settings.ExcludedApps.Length == 0)
+        {
+            if (settings.WindowsOutputDevice.Length > 0)
+            {
+                output = new(settings.WindowsOutputDevice, false, outputRing.Write);
+                await output.Ready.WaitAsync(TimeSpan.FromSeconds(10), ct);
+            }
+            else
+            {
+                allAudio = settings.CaptureMicrophone ? new(0, false, outputRing.Write) : new(0);
+                await allAudio.WaitReadyAsync(ct);
+                if (!settings.CaptureMicrophone) { Source = allAudio.Source; return; }
+            }
+        }
+        await RefreshAsync(ct);
+        writer = Task.Run(WriteAsync);
     }
     public bool RequiresHistoryReset()
     {
-        if(allAudio!=null)return false;
-        var view=WindowsSessions.Read(settings.ExcludedApps);
+        if (!settings.CaptureAudio || allAudio != null || output != null) return false;
+        var view=WindowsSessions.Read(settings.ExcludedApps, settings.WindowsOutputDevice);
         return AudioPolicy.RootsContainExcluded(sources.Keys,view.Parents,view.Excluded);
     }
     public async Task<bool> RefreshAsync(CancellationToken ct)
     {
-        if (allAudio != null) return false;
-        var view=WindowsSessions.Read(settings.ExcludedApps);
+        if (!settings.CaptureAudio || allAudio != null || output != null) return false;
+        var view=WindowsSessions.Read(settings.ExcludedApps, settings.WindowsOutputDevice);
         var pids = view.Included;
         bool unsafeChange=AudioPolicy.RootsContainExcluded(sources.Keys,view.Parents,view.Excluded);
         if(unsafeChange)return true; // Recorder must discard history before any source mutation can fail.
@@ -62,6 +79,7 @@ public sealed class WindowsAudioMixer : IAsyncDisposable
     {
         await pipe.WaitForConnectionAsync(stop.Token);
         lock(sync)foreach(var (_,ring) in sources.Values)ring.Clear(); // Align the PCM epoch with video input readiness.
+        microphoneRing.Clear(); outputRing.Clear();
         const int samples = 960 * 2; // 20 ms stereo, fixed allocation
         byte[] output = new byte[samples * 2]; int[] mix = new int[samples]; short[] scratch = new short[samples];
         var clock = Stopwatch.StartNew(); long frame = 0;
@@ -75,6 +93,16 @@ public sealed class WindowsAudioMixer : IAsyncDisposable
                     ring.Read(scratch);
                     for (int i = 0; i < samples; i++) mix[i] += scratch[i];
                 }
+            }
+            if (microphone != null)
+            {
+                microphoneRing.Read(scratch);
+                for (int i = 0; i < samples; i++) mix[i] += scratch[i];
+            }
+            if (output != null || allAudio != null)
+            {
+                outputRing.Read(scratch);
+                for (int i = 0; i < samples; i++) mix[i] += scratch[i];
             }
             var destination = MemoryMarshal.Cast<byte, short>(output.AsSpan());
             for (int i = 0; i < samples; i++) destination[i] = (short)Math.Clamp(mix[i], short.MinValue, short.MaxValue);
@@ -90,7 +118,12 @@ public sealed class WindowsAudioMixer : IAsyncDisposable
         stop.Cancel(); await pipe.DisposeAsync();
         if (writer != null) try { await writer; } catch (Exception ex) when (ex is IOException or OperationCanceledException or ObjectDisposedException) { }
         foreach (var (capture, _) in sources.Values) await capture.DisposeAsync(); sources.Clear();
-        if (allAudio != null) await allAudio.DisposeAsync(); stop.Dispose();
+        if (allAudio != null) await allAudio.DisposeAsync();
+        try { microphone?.Dispose(); }
+        catch (Exception ex) when (ex is COMException or IOException or TimeoutException) { }
+        try { output?.Dispose(); }
+        catch (Exception ex) when (ex is COMException or IOException or TimeoutException) { }
+        stop.Dispose();
     }
 }
 

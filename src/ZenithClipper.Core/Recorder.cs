@@ -93,7 +93,7 @@ public sealed class Recorder : IRecorderEngine
             }
             finally { bufferLock.Release(); }
             string? source = null;
-            if (settings.CaptureAudio)
+            if (settings.CaptureAudio || (OperatingSystem.IsWindows() && settings.CaptureMicrophone))
             {
                 if (OperatingSystem.IsWindows())
                 {
@@ -210,7 +210,7 @@ public sealed class Recorder : IRecorderEngine
                 if (recoveries.Count < 3) { recoveries.Add(DateTimeOffset.UtcNow); notice = "Capture stopped unexpectedly and was restarted: " + error; restart = true; }
                 return;
             }
-            if (OperatingSystem.IsWindows() && settings.CaptureAudio)
+            if (OperatingSystem.IsWindows() && (settings.CaptureAudio || settings.CaptureMicrophone))
             {
                 if (windowsAudio != null && await windowsAudio.RefreshAsync(ct))
                 {

@@ -551,7 +551,7 @@ public sealed class EditorForm : Form
         public LibraryHost(Control list) { BackColor = Theme.Surface; Padding = new Padding(0, Theme.S(6), 0, 0); list.Dock = DockStyle.Fill; Controls.Add(list); }
     }
 
-    sealed class DarkMenuRenderer : ToolStripProfessionalRenderer
+    internal sealed class DarkMenuRenderer : ToolStripProfessionalRenderer
     {
         public DarkMenuRenderer() : base(new DarkColors()) { RoundedEdges = false; }
         protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) { e.TextColor = e.Item?.Text?.StartsWith("Move", StringComparison.Ordinal) == true ? Theme.Mix(Theme.Live, Color.White, 0.3f) : Theme.Text; base.OnRenderItemText(e); }

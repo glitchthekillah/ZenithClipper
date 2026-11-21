@@ -122,8 +122,13 @@ public sealed partial class EditorWindow
             if (fullScreenImage is not null) fullScreenImage.Source = bitmap;
         }
         using (var buffer = bitmap.Lock())
-            for (var y = 0; y < frame.Height; y++)
-                Marshal.Copy(frame.Rgba, y * frame.Width * 4, buffer.Address + y * buffer.RowBytes, frame.Width * 4);
+        {
+            int stride = frame.Width * 4;
+            if (buffer.RowBytes == stride) Marshal.Copy(frame.Rgba, 0, buffer.Address, stride * frame.Height);
+            else
+                for (var y = 0; y < frame.Height; y++)
+                    Marshal.Copy(frame.Rgba, y * stride, buffer.Address + y * buffer.RowBytes, stride);
+        }
         preview.InvalidateVisual(); fullScreenImage?.InvalidateVisual();
         FeedScopes(frame);
         // Dropped-frame indicator: during playback a gap between consecutive frames means frames were skipped.

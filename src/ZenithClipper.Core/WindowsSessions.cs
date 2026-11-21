@@ -11,13 +11,14 @@ public static class WindowsSessions
     // A newly launched excluded app is never added to this allowlist.
     public static int[] IncludedPids(string[] exclusions)=>Read(exclusions).Included;
     public sealed record View(int[] Included,int[] Excluded,Dictionary<int,int> Parents);
-    public static View Read(string[] exclusions)
+    public static View Read(string[] exclusions, string outputId = "")
     {
         var enumerator = (IMMDeviceEnumerator)new DeviceEnumerator();
         IMMDevice? device = null; IAudioSessionManager2? manager = null; ISessionEnumerator? sessions = null;
         try
         {
-            enumerator.GetDefaultAudioEndpoint(0, 1, out device);
+            if (outputId.Length == 0) enumerator.GetDefaultAudioEndpoint(0, 1, out device);
+            else enumerator.GetDevice(outputId, out device);
             var id = typeof(IAudioSessionManager2).GUID; device.Activate(ref id, 23, 0, out var obj); manager = (IAudioSessionManager2)obj;
             manager.GetSessionEnumerator(out sessions); sessions.GetCount(out int count);
             var snapshot=WindowsProcesses.Snapshot(); var parents=snapshot.Parents; var allowed = new HashSet<int>();
@@ -87,6 +88,7 @@ public static class WindowsSessions
     [ComImport, Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)] interface IMMDeviceEnumerator
     {
         void EnumAudioEndpoints(int flow, uint mask, out nint devices); void GetDefaultAudioEndpoint(int flow, int role, out IMMDevice device);
+        void GetDevice([MarshalAs(UnmanagedType.LPWStr)] string id, out IMMDevice device);
     }
     [ComImport, Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)] interface IMMDevice
     {

@@ -51,7 +51,9 @@ public sealed class PanelForm : Form
     StatTiles tiles = null!;
 
     // Settings
-    ComboBox clipSoundPicker = null!;
+    ZButton clipSoundPicker = null!, inputPicker = null!, outputPicker = null!;
+    ZToggle captureMicrophone = null!;
+    string selectedSound = ClipSaveSound.DefaultId, selectedInput = "", selectedOutput = "";
     ZChips history = null!, disk = null!, defaultLength = null!;
     ZChips resolution = null!, frameRate = null!, encoder = null!, monitor = null!, backend = null!;
     ZSlider quality = null!;
@@ -464,12 +466,6 @@ public sealed class PanelForm : Form
         replayCard.Add(new SettingRow("Save shortcut length", "How much the save shortcut keeps.", defaultLength, 380));
         replayCard.Add(new SettingRow("Start with Windows", "Runs quietly in the background when you sign in. Open this panel from the shortcut or the Start menu.", startWithWindows, 44));
         replayCard.Add(new SettingRow("Record on startup", "Starts recording as soon as ZenithClipper starts. Turn off to start it yourself with the Record switch.", recordOnStart, 44));
-        replayCard.Add(new SettingRow("Clip save sound", "Play a short chime when a clip is saved.", clipSaveSound, 44));
-        clipSoundPicker = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, AccessibleName = "Default clip save sound" };
-        clipSoundPicker.Items.AddRange(ClipSaveSound.SoundIds.Select(ClipSaveSound.DisplayName).ToArray());
-        replayCard.Add(new SettingRow("Default clip save sound", "Choose what plays after saving a clip.", clipSoundPicker, 180));
-        clipSoundPicker.SelectedIndexChanged += (_, _) => Changed();
-        clipSaveSound.CheckedChanged += (_, _) => Changed();
         history.SelectionChanged += (_, _) => { if (!loadingSettings && history.SelectedValue is -1) PickCustomHistory(); Changed(); };
         disk.SelectionChanged += (_, _) => Changed();
         defaultLength.SelectionChanged += (_, _) => Changed();
@@ -500,6 +496,22 @@ public sealed class PanelForm : Form
 
         var audioCard = view.Add(new AutoCard("Audio", Glyphs.Speakers) { Subtitle = "What your clips hear" });
         audioCard.Add(new SettingRow("Record app audio", "One mixed track of everything you hear, minus excluded apps.", captureAudio, 44));
+        captureMicrophone = new();
+        inputPicker = AudioChoiceButton("Input device");
+        outputPicker = AudioChoiceButton("Output device");
+        clipSoundPicker = AudioChoiceButton("Default clip save sound");
+        audioCard.Add(new SettingRow("Include microphone", "Mix your voice into newly recorded clips.", captureMicrophone, 44));
+        audioCard.Add(new SettingRow("Input device", "Choose which microphone is recorded.", inputPicker, 220));
+        audioCard.Add(new SettingRow("Output device", "Choose the Windows output used for app audio capture.", outputPicker, 220));
+        audioCard.Add(new SettingRow("Clip save sound", "Play a short chime after a successful save.", clipSaveSound, 44));
+        audioCard.Add(new SettingRow("Default clip save sound", "Choose the chime that plays after a save.", clipSoundPicker, 220));
+        captureMicrophone.CheckedChanged += (_, _) => Changed();
+        clipSaveSound.CheckedChanged += (_, _) => Changed();
+        inputPicker.Click += (_, _) => ShowDeviceChoices(inputPicker, true);
+        outputPicker.Click += (_, _) => ShowDeviceChoices(outputPicker, false);
+        clipSoundPicker.Click += (_, _) => ShowAudioChoices(clipSoundPicker, selectedSound,
+            ClipSaveSound.SoundIds.Select(id => new WindowsEndpoints.Device(id, ClipSaveSound.DisplayName(id))),
+            option => { selectedSound = option.Id; clipSoundPicker.Text = option.Name; Changed(); });
         audioCard.Add(new SettingRow("Excluded apps", "Process names, comma separated. Easier from the home screen while the app is playing.", excludedField, 300));
         captureAudio.CheckedChanged += (_, _) => Changed();
         excludedField.Box.TextChanged += (_, _) => Changed();
@@ -554,6 +566,56 @@ public sealed class PanelForm : Form
         return bar;
     }
 
+    static ZButton AudioChoiceButton(string label) => new("System default", ButtonKind.Secondary)
+    {
+        AccessibleName = label,
+        AutoWidth = false
+    };
+
+    static string DeviceLabel(bool microphone, string id)
+    {
+        if (id.Length == 0) return "System default";
+        try { return WindowsEndpoints.List(microphone).FirstOrDefault(device => device.Id == id)?.Name ?? "Disconnected device"; }
+        catch (COMException) { return "Device unavailable"; }
+    }
+
+    void ShowDeviceChoices(ZButton button, bool microphone)
+    {
+        try
+        {
+            WindowsEndpoints.Device[] choices = [new("", "System default"), .. WindowsEndpoints.List(microphone)];
+            ShowAudioChoices(button, microphone ? selectedInput : selectedOutput, choices, option =>
+            {
+                if (microphone) selectedInput = option.Id;
+                else selectedOutput = option.Id;
+                button.Text = option.Name;
+                Changed();
+            });
+        }
+        catch (COMException ex) { ShowToast("Could not list Windows audio devices. " + ex.Message, Banner.Tone.Error); }
+    }
+
+    static void ShowAudioChoices(ZButton button, string current, IEnumerable<WindowsEndpoints.Device> choices, Action<WindowsEndpoints.Device> select)
+    {
+        var menu = new ContextMenuStrip
+        {
+            Renderer = new EditorForm.DarkMenuRenderer(),
+            BackColor = Theme.Raised,
+            ForeColor = Theme.Text,
+            Font = Theme.Body,
+            ShowCheckMargin = true,
+            ShowImageMargin = false
+        };
+        foreach (var option in choices)
+        {
+            var item = new ToolStripMenuItem(option.Name) { Checked = option.Id == current };
+            item.Click += (_, _) => select(option);
+            menu.Items.Add(item);
+        }
+        menu.Closed += (_, _) => menu.Dispose();
+        menu.Show(button, new Point(0, button.Height));
+    }
+
     Settings BuildFromControls()
     {
         EnsureSettings();
@@ -572,7 +634,10 @@ public sealed class PanelForm : Form
             CaptureAudio = captureAudio.Checked,
             AutoStartCapture = recordOnStart.Checked,
             ClipSaveSound = clipSaveSound.Checked,
-            ClipSaveSoundId = clipSoundPicker.SelectedIndex < 0 ? s.ClipSaveSoundId : ClipSaveSound.SoundIds[clipSoundPicker.SelectedIndex],
+            ClipSaveSoundId = selectedSound,
+            CaptureMicrophone = captureMicrophone.Checked,
+            WindowsInputDevice = selectedInput,
+            WindowsOutputDevice = selectedOutput,
             ExcludedApps = excludedField.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(x => x.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? x[..^4] : x).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
             ClipDirectory = clipFolder.Length > 0 ? clipFolder : s.ClipDirectory,
             ClipHotkey = clipKey.Value, PanelHotkey = panelKey.Value,
@@ -585,7 +650,13 @@ public sealed class PanelForm : Form
         loadingSettings = true;
         try
         {
-            clipSoundPicker.SelectedItem = ClipSaveSound.DisplayName(s.ClipSaveSoundId);
+            selectedSound = ClipSaveSound.NormalizeId(s.ClipSaveSoundId);
+            clipSoundPicker.Text = ClipSaveSound.DisplayName(selectedSound);
+            captureMicrophone.SetSilently(s.CaptureMicrophone);
+            selectedInput = s.WindowsInputDevice;
+            selectedOutput = s.WindowsOutputDevice;
+            inputPicker.Text = DeviceLabel(true, selectedInput);
+            outputPicker.Text = DeviceLabel(false, selectedOutput);
             SelectPreset(history, s.BufferSeconds); SelectPreset(defaultLength, s.ClipSeconds);
             if (!disk.Select(s.MaxBufferMiB)) { disk.Add(Theme.Bytes(s.MaxBufferMiB * 1048576.0), s.MaxBufferMiB); disk.Select(s.MaxBufferMiB); }
             if (!resolution.Select(s.OutputWidth)) { resolution.Add($"{s.OutputWidth}w", s.OutputWidth); resolution.Select(s.OutputWidth); }

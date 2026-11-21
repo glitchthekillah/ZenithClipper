@@ -30,6 +30,14 @@ try
     var first=await engine.GetFrameAsync(5);AssertPixel(first,80,45,0,"red clip");Console.WriteLine("PASS MLT first clip decoded");
     var middle=await engine.GetFrameAsync(20);AssertPixel(middle,80,45,2,"blue overlay");AssertPixel(middle,5,5,0,"red outside overlay");Console.WriteLine("PASS MLT layered transform");
     var end=await engine.GetFrameAsync(50);AssertPixel(end,80,45,1,"green clip");Console.WriteLine("PASS MLT second clip after cut");
+    var beforeCut = await engine.GetFrameAsync(29);
+    var atCut = await engine.GetFrameAsync(30);
+    var afterCut = await engine.GetFrameAsync(31);
+    AssertPixel(beforeCut, 5, 5, 0, "last red frame");
+    AssertPixel(atCut, 5, 5, 1, "first green frame");
+    AssertPixel(afterCut, 5, 5, 1, "next green frame");
+    AssertPixel(await engine.GetFrameAsync(28), 5, 5, 0, "backward seek");
+    Console.WriteLine("PASS MLT sequential decode crosses the cut and supports backward seeks");
     if(first.AudioPcm.Length==0 || first.AudioPcm.All(x=>x==0))throw new Exception("Native preview PCM audio missing.");
     Console.WriteLine("PASS MLT native preview audio samples");
     track.Muted=true;await engine.LoadAsync(project,160);var muted=await engine.GetFrameAsync(5);

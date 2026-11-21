@@ -38,7 +38,7 @@ public sealed class NativeRecorder(Settings initialSettings) : IRecorderEngine
                 video=new(new NativeVideoConfiguration{MonitorIndex=settings.Monitor,FrameRate=settings.Fps,Quantizer=settings.Quality,OutputWidth=settings.OutputWidth,UseNv12Input=true},OnVideo);
                 replay=null;
                 lastFrame=-1;audioSamples=0;aac=null;
-                if(settings.CaptureAudio){audio=new(settings.ExcludedApps,settings.AppVolumes);await audio.StartAsync(token.Token);}
+                if(settings.CaptureAudio || settings.CaptureMicrophone){audio=new(settings);await audio.StartAsync(token.Token);}
                 video.WorkerFinishing+=WorkerFinishing;video.CaptureFault+=VideoFault;
                 token.Token.ThrowIfCancellationRequested();video.Start();token.Token.ThrowIfCancellationRequested();capturing=true;state="Warming up";
             }
@@ -52,10 +52,10 @@ public sealed class NativeRecorder(Settings initialSettings) : IRecorderEngine
     {
         if(index==0)
         {
-            audio?.BeginEpoch();if(settings.CaptureAudio)aac=new AacEncoder(OnAudio);
+            audio?.BeginEpoch();if(audio!=null)aac=new AacEncoder(OnAudio);
             replay=new(AppPaths.Buffer,new VideoTrackConfig(video!.Width,video.Height,video.FrameRate),
                 new AudioTrackConfig(EncoderDelaySamples:0),settings.BufferSeconds,
-                includeAudio:settings.CaptureAudio,maxBytes:settings.MaxBufferMiB*1024*1024);
+                includeAudio:audio!=null,maxBytes:settings.MaxBufferMiB*1024*1024);
         }
         var writer=replay??throw new InvalidOperationException("Replay writer is unavailable.");
         writer.AddVideo(packet,index,key);lastFrame=index;
@@ -173,7 +173,7 @@ public sealed class NativeRecorder(Settings initialSettings) : IRecorderEngine
                 // video and the replay history keep running.
                 if(audio is {} current&&!current.SetVolumes(value.AppVolumes))
                 {
-                    var next=new NativeAudioMixer(value.ExcludedApps,value.AppVolumes);
+                    var next=new NativeAudioMixer(value);
                     try{await next.StartAsync(ct);}catch{next.Dispose();throw;}
                     next.BeginEpoch();Interlocked.Exchange(ref audio,next)?.Dispose();
                 }

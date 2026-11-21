@@ -14,8 +14,10 @@ public sealed record Settings
     public int Monitor { get; init; }
     public string WindowsCaptureBackend { get; init; } = "auto";
     public bool CaptureAudio { get; init; } = true;
-    /// <summary>Linux: mix the default microphone into clips.</summary>
+    /// <summary>Mix microphone audio into newly captured clips.</summary>
     public bool CaptureMicrophone { get; init; }
+    public string WindowsInputDevice { get; init; } = "";
+    public string WindowsOutputDevice { get; init; } = "";
     public string LinuxPlaybackDevice { get; init; } = "";
     public bool ClipSaveSound { get; init; } = true;
     public string ClipSaveSoundId { get; init; } = ZenithClipper.ClipSaveSound.DefaultId;

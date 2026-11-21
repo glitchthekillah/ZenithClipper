@@ -17,6 +17,7 @@ public sealed class MltSession : IDisposable,IAsyncDisposable
     string? directory;
     FrameRate fps=new(30,1);
     int width,height;
+    long nextDecodedFrame = -1;
     readonly CancellationTokenSource lifetime=new();
     readonly TaskCompletionSource disposal=new(TaskCreationOptions.RunContinuationsAsynchronously);
     int disposalState;
@@ -60,7 +61,9 @@ public sealed class MltSession : IDisposable,IAsyncDisposable
     {
         if(producer==0)throw new InvalidOperationException("Open a project sequence first.");
         long position=Math.Clamp(frameNumber,0,Math.Max(0,Duration-1));
-        Native.Seek(producer,checked((int)position));
+        if (nextDecodedFrame != position)
+            Native.Seek(producer, checked((int)position));
+        nextDecodedFrame = -1;
         if(Native.GetFrame(Native.ProducerService(producer),out nint frame,0)!=0 || frame==0)throw new IOException("MLT could not decode this frame.");
         try
         {
@@ -82,7 +85,8 @@ public sealed class MltSession : IDisposable,IAsyncDisposable
                 if(Native.Audio(frame,out nint buffer,ref format,ref frequency,ref channels,ref samples)==0 && buffer!=0 && format==1 && channels==2 && frequency==48000 && samples is >0 and <=480000)
                 {pcm=new byte[checked(samples*channels*2)];Marshal.Copy(buffer,pcm,0,pcm.Length);}
             }
-            Position=position;return new(position,w,h,rgba){AudioPcm=pcm};
+            Position=position; nextDecodedFrame = position + 1;
+            return new(position,w,h,rgba){AudioPcm=pcm};
         }
         finally{Native.FrameClose(frame);}
     }
@@ -206,6 +210,7 @@ public sealed class MltSession : IDisposable,IAsyncDisposable
     }
     void CloseGraph()
     {
+        nextDecodedFrame = -1;
         if(producer!=0){Native.ProducerClose(producer);producer=0;}if(profile!=0){Native.ProfileClose(profile);profile=0;}
         if(directory!=null){try{Directory.Delete(directory,true);}catch(IOException){}directory=null;}
     }

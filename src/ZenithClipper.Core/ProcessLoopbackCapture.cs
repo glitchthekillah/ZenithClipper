@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 using System.Runtime.Versioning;
 using ZenithClipper;
-namespace ZenithClipper.Native.Audio
+namespace ZenithClipper
 {
  [SupportedOSPlatform("windows")]
  public sealed class ProcessLoopbackCapture:IDisposable
@@ -11,15 +11,23 @@ namespace ZenithClipper.Native.Audio
   public Task Ready=>ready.Task;public long Packets=>Interlocked.Read(ref packets);public long Bytes=>Interlocked.Read(ref bytes);
   readonly Action<byte[],int>? onAudio;
   public bool Faulted=>worker.IsFaulted;
-  public ProcessLoopbackCapture(int processId,bool include,Action<byte[],int> onAudio){this.onAudio=onAudio;worker=Task.Factory.StartNew(()=>Run(processId,include),CancellationToken.None,TaskCreationOptions.LongRunning,TaskScheduler.Default);}
-  unsafe void Run(int excludedPid,bool include)
+  public ProcessLoopbackCapture(int processId,bool include,Action<byte[],int> onAudio){this.onAudio=onAudio;worker=Task.Factory.StartNew(()=>Run(processId,include,null,false),CancellationToken.None,TaskCreationOptions.LongRunning,TaskScheduler.Default);}
+  public ProcessLoopbackCapture(string endpointId, bool microphone, Action<byte[], int> onAudio)
+  {
+   this.onAudio = onAudio;
+   worker = Task.Factory.StartNew(() => Run(0, false, endpointId, microphone), CancellationToken.None,
+    TaskCreationOptions.LongRunning, TaskScheduler.Default);
+  }
+  unsafe void Run(int excludedPid,bool include,string? endpointId,bool microphone)
   {
    IAudioClient? audio=null;IAudioCaptureClient? stream=null;bool initialized=false;
    try
    {
-    Marshal.ThrowExceptionForHR(Api.CoInitializeEx(0,0));initialized=true;audio=Activate(excludedPid,include,stop.Token);
+    Marshal.ThrowExceptionForHR(Api.CoInitializeEx(0,0));initialized=true;audio = endpointId is null
+        ? Activate(excludedPid, include, stop.Token)
+        : WindowsEndpoints.Activate<IAudioClient>(microphone, endpointId);
     WaveFormat format=new(){Tag=1,Channels=2,Samples=48000,BytesPerSecond=192000,BlockAlign=4,Bits=16};
-    audio.Initialize(0,0x80000000|0x00020000|0x00040000,0,0,ref format,0);
+    audio.Initialize(0, (endpointId is null ? 0x80040000u : 0x88040000u) | (microphone ? 0u : 0x00020000u), 0, 0, ref format, 0);
     Guid captureId=typeof(IAudioCaptureClient).GUID;audio.GetService(ref captureId,out nint pointer);try{stream=UniqueComInterfaceMarshaller<IAudioCaptureClient>.ConvertToManaged((void*)pointer)!;}finally{if(pointer!=0)Marshal.Release(pointer);}
     using var signal=new AutoResetEvent(false);audio.SetEventHandle(signal.SafeWaitHandle.DangerousGetHandle());audio.Start();ready.TrySetResult();var storage=new AudioPacketBuffer();WaitHandle[] handles=[signal,stop.Token.WaitHandle];
     while(!stop.IsCancellationRequested)

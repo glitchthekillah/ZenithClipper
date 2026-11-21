@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup><AllowUnsafeBlocks>true</AllowUnsafeBlocks><IsAotCompatible>true</IsAotCompatible><EnableDefaultCompileItems>false</EnableDefaultCompileItems></PropertyGroup>
-<ItemGroup><Compile Include="AacEncoder.cs" /><Compile Include="ProcessLoopbackCapture.cs" /><Compile Include="NativeAudioSessions.cs" /><Compile Include="NativeAudioMixer.cs" /></ItemGroup>
+<ItemGroup><Compile Include="AacEncoder.cs" /><Compile Include="NativeAudioSessions.cs" /><Compile Include="NativeAudioMixer.cs" /></ItemGroup>
 <ItemGroup><ProjectReference Include="../ZenithClipper.Core/ZenithClipper.Core.csproj" /><None Include="AacBuild/zenith_aac.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Link="zenith_aac.dll" Condition="Exists('AacBuild/zenith_aac.dll')" /></ItemGroup></Project>

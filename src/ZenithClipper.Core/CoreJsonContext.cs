@@ -55,6 +55,8 @@ internal sealed class SettingsJsonConverter : JsonConverter<Settings>
                 else if(name.Equals("WindowsCaptureBackend", options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { WindowsCaptureBackend = reader.GetString()! };
                 else if(name.Equals("CaptureAudio", options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { CaptureAudio = reader.GetBoolean() };
                 else if(name.Equals("CaptureMicrophone", options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { CaptureMicrophone = reader.GetBoolean() };
+                else if (name.Equals(nameof(Settings.WindowsInputDevice), options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { WindowsInputDevice = reader.GetString() ?? "" };
+                else if (name.Equals(nameof(Settings.WindowsOutputDevice), options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { WindowsOutputDevice = reader.GetString() ?? "" };
                 else if (name.Equals(nameof(Settings.LinuxPlaybackDevice), options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { LinuxPlaybackDevice = reader.GetString() ?? "" };
                 else if (name.Equals(nameof(Settings.ClipSaveSound), options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { ClipSaveSound = reader.GetBoolean() };
                 else if (name.Equals(nameof(Settings.ClipSaveSoundId), options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)) result = result with { ClipSaveSoundId = ClipSaveSound.NormalizeId(reader.GetString()) };
@@ -94,6 +96,8 @@ internal sealed class SettingsJsonConverter : JsonConverter<Settings>
         writer.WriteString(options.PropertyNamingPolicy?.ConvertName("WindowsCaptureBackend") ?? "WindowsCaptureBackend", value.WindowsCaptureBackend);
         writer.WriteBoolean(options.PropertyNamingPolicy?.ConvertName("CaptureAudio") ?? "CaptureAudio", value.CaptureAudio);
         writer.WriteBoolean(options.PropertyNamingPolicy?.ConvertName("CaptureMicrophone") ?? "CaptureMicrophone", value.CaptureMicrophone);
+        writer.WriteString(options.PropertyNamingPolicy?.ConvertName(nameof(Settings.WindowsInputDevice)) ?? nameof(Settings.WindowsInputDevice), value.WindowsInputDevice);
+        writer.WriteString(options.PropertyNamingPolicy?.ConvertName(nameof(Settings.WindowsOutputDevice)) ?? nameof(Settings.WindowsOutputDevice), value.WindowsOutputDevice);
         writer.WriteString(options.PropertyNamingPolicy?.ConvertName(nameof(Settings.LinuxPlaybackDevice)) ?? nameof(Settings.LinuxPlaybackDevice), value.LinuxPlaybackDevice);
         writer.WriteBoolean(options.PropertyNamingPolicy?.ConvertName(nameof(Settings.ClipSaveSound)) ?? nameof(Settings.ClipSaveSound), value.ClipSaveSound);
         writer.WriteString(options.PropertyNamingPolicy?.ConvertName(nameof(Settings.ClipSaveSoundId)) ?? nameof(Settings.ClipSaveSoundId), ClipSaveSound.NormalizeId(value.ClipSaveSoundId));

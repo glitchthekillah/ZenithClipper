@@ -7,14 +7,15 @@ public sealed record AudioProcessView(int[] Included,int[] Excluded,Dictionary<i
 [SupportedOSPlatform("windows")]
 public static partial class NativeAudioSessions
 {
- public static unsafe AudioProcessView Read(string[] exclusions)
+ public static unsafe AudioProcessView Read(string[] exclusions, string outputId = "")
  {
   Marshal.ThrowExceptionForHR(Api.CoInitializeEx(0,0));IMMDeviceEnumerator? enumerator=null;IMMDevice? device=null;ISessionManager? manager=null;ISessionEnumerator? sessions=null;
   try
   {
    Guid clsid=new("BCDE0395-E52F-467C-8E3D-C4579291692E"),iid=typeof(IMMDeviceEnumerator).GUID;
    Marshal.ThrowExceptionForHR(CoCreateInstance(ref clsid,0,1,ref iid,out nint native));enumerator=Take<IMMDeviceEnumerator>(native);
-   enumerator.GetDefaultAudioEndpoint(0,1,out native);device=Take<IMMDevice>(native);
+   if (outputId.Length == 0) enumerator.GetDefaultAudioEndpoint(0,1,out native); else enumerator.GetDevice(outputId,out native);
+   device=Take<IMMDevice>(native);
    iid=typeof(ISessionManager).GUID;device.Activate(ref iid,23,0,out native);manager=Take<ISessionManager>(native);
    manager.GetSessionEnumerator(out native);sessions=Take<ISessionEnumerator>(native);sessions.GetCount(out int count);
    var snapshot=Processes();var candidates=new HashSet<int>();
@@ -45,8 +46,8 @@ public static partial class NativeAudioSessions
  [LibraryImport("kernel32.dll",SetLastError=true)]private static partial int Process32NextW(nint snapshot,ref Entry entry);
  [DllImport("kernel32.dll")][return:MarshalAs(UnmanagedType.Bool)]static extern bool CloseHandle(nint handle);
 }
-[GeneratedComInterface,Guid("A95664D2-9614-4F35-A746-DE8DB63617E6")]partial interface IMMDeviceEnumerator
-{void EnumAudioEndpoints(int flow,uint mask,out nint devices);void GetDefaultAudioEndpoint(int flow,int role,out nint device);}
+[GeneratedComInterface(StringMarshalling = StringMarshalling.Utf16),Guid("A95664D2-9614-4F35-A746-DE8DB63617E6")]partial interface IMMDeviceEnumerator
+{void EnumAudioEndpoints(int flow,uint mask,out nint devices);void GetDefaultAudioEndpoint(int flow,int role,out nint device);void GetDevice(string id,out nint device);}
 [GeneratedComInterface,Guid("D666063F-1587-4E43-81F1-B948E807363F")]partial interface IMMDevice{void Activate(ref Guid iid,uint context,nint parameters,out nint result);}
 [GeneratedComInterface,Guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F")]partial interface ISessionManager
 {void GetAudioSessionControl(nint guid,uint flags,out nint control);void GetSimpleAudioVolume(nint guid,uint flags,out nint volume);void GetSessionEnumerator(out nint enumerator);}

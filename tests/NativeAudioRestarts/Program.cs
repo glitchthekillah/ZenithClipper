@@ -30,7 +30,7 @@ Console.WriteLine("PASS five audio-only restart cycles; all mixers disposed with
 
 async Task Capture(int cycle, int[] externalOwners)
 {
-    using var mixer = new NativeAudioMixer(rules);
+    using var mixer = new NativeAudioMixer(new ZenithClipper.Settings { ExcludedApps = rules });
     await mixer.StartAsync(timeout.Token);
     mixer.BeginEpoch();
     var live = NativeAudioSessions.Read(rules);
