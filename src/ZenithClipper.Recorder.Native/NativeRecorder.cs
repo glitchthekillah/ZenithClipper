@@ -163,7 +163,12 @@ public sealed class NativeRecorder(Settings initialSettings) : IRecorderEngine
     public async Task UpdateAsync(Settings value,CancellationToken ct)
     {
         value.Validate();if(value.Encoder is not ("auto" or "nvenc")||value.WindowsCaptureBackend!="auto")throw new NotSupportedException("This running recorder uses native NVIDIA capture. Stop and relaunch ZenithClipper with the requested encoder/backend; current settings and recording have been preserved.");
-        if(!SettingsChanges.RequiresRestart(settings,value))
+        // Microphone on/off and device choices only rebuild the audio mixer, so they apply live while video and the
+        // replay history keep running (same path as per-app volume changes).
+        bool audioRouting=value.CaptureMicrophone!=settings.CaptureMicrophone||value.WindowsInputDevice!=settings.WindowsInputDevice||value.WindowsOutputDevice!=settings.WindowsOutputDevice;
+        bool liveAudio=audioRouting&&audio!=null&&(value.CaptureAudio||value.CaptureMicrophone);
+        var compared=liveAudio?settings with{CaptureMicrophone=value.CaptureMicrophone,WindowsInputDevice=value.WindowsInputDevice,WindowsOutputDevice=value.WindowsOutputDevice}:settings;
+        if(!SettingsChanges.RequiresRestart(compared,value))
         {
             await lifecycle.WaitAsync(ct);
             try
@@ -171,7 +176,7 @@ public sealed class NativeRecorder(Settings initialSettings) : IRecorderEngine
                 replay?.SetRetention(value.BufferSeconds,value.MaxBufferMiB*1024*1024);
                 // Per-app levels apply live. Moving between whole-system and per-app capture swaps the mixer in place;
                 // video and the replay history keep running.
-                if(audio is {} current&&!current.SetVolumes(value.AppVolumes))
+                if(audio is {} current&&(liveAudio||!current.SetVolumes(value.AppVolumes)))
                 {
                     var next=new NativeAudioMixer(value);
                     try{await next.StartAsync(ct);}catch{next.Dispose();throw;}

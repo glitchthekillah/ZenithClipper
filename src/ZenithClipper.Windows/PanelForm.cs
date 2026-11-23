@@ -505,7 +505,8 @@ public sealed class PanelForm : Form
         audioCard.Add(new SettingRow("Output device", "Choose the Windows output used for app audio capture.", outputPicker, 220));
         audioCard.Add(new SettingRow("Clip save sound", "Play a short chime after a successful save.", clipSaveSound, 44));
         audioCard.Add(new SettingRow("Default clip save sound", "Choose the chime that plays after a save.", clipSoundPicker, 220));
-        captureMicrophone.CheckedChanged += (_, _) => Changed();
+        // Mic and device choices apply the moment they change; the recorder swaps its audio mixer without losing the buffer.
+        captureMicrophone.CheckedChanged += async (_, _) => { if (!loadingSettings) await Guard(ApplyLiveAudioAsync); };
         clipSaveSound.CheckedChanged += (_, _) => Changed();
         inputPicker.Click += (_, _) => ShowDeviceChoices(inputPicker, true);
         outputPicker.Click += (_, _) => ShowDeviceChoices(outputPicker, false);
@@ -589,7 +590,7 @@ public sealed class PanelForm : Form
                 if (microphone) selectedInput = option.Id;
                 else selectedOutput = option.Id;
                 button.Text = option.Name;
-                Changed();
+                _ = Guard(ApplyLiveAudioAsync);
             });
         }
         catch (COMException ex) { ShowToast("Could not list Windows audio devices. " + ex.Message, Banner.Tone.Error); }
@@ -758,6 +759,16 @@ public sealed class PanelForm : Form
         await ConfigureAsync(next);
         LoadSettings(next);
         ShowToast(restart ? "Settings applied. Capture restarted with a fresh buffer." : "Settings applied.", Banner.Tone.Success);
+    }
+
+    async Task ApplyLiveAudioAsync()
+    {
+        bool micWas = settings.CaptureMicrophone;
+        var next = settings with { CaptureMicrophone = captureMicrophone.Checked, WindowsInputDevice = selectedInput, WindowsOutputDevice = selectedOutput };
+        if (next == settings) return;
+        await ConfigureAsync(next);
+        ShowToast(next.CaptureMicrophone == micWas ? "Audio device updated." : next.CaptureMicrophone ? "Microphone is now recorded into your clips." : "Microphone is no longer recorded.", Banner.Tone.Success);
+        Changed();
     }
 
     async Task ConfigureAsync(Settings next)
@@ -1368,9 +1379,13 @@ sealed class RecentList : Control, IMeasured
     int CellW(int width) => (width - Theme.S(10)) / Columns;
     int CellH(int width) => (int)(CellW(width) * 9 / 16f) + Theme.S(48);
     public int MeasureHeight(int width) => clips.Count == 0 ? Theme.S(230) : (clips.Count + Columns - 1) / Columns * (CellH(width) + Theme.S(10));
+    DateTime loadedStamp;
     public void RefreshClips(Settings settings, string? lastSavedClip)
     {
-        if (IsDisposed || (loadedFolder == settings.ClipDirectory && loadedLastClip == lastSavedClip)) return;
+        if (IsDisposed) return;
+        DateTime stamp = DateTime.MinValue;
+        try { if (Directory.Exists(settings.ClipDirectory)) stamp = Directory.GetLastWriteTimeUtc(settings.ClipDirectory); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        if (loadedFolder == settings.ClipDirectory && loadedLastClip == lastSavedClip && loadedStamp == stamp) return;
 
         (string Path, DateTime When, long Size, Bitmap? Thumb)[] files;
         try
@@ -1389,7 +1404,7 @@ sealed class RecentList : Control, IMeasured
             return;
         }
 
-        loadedFolder = settings.ClipDirectory;
+        loadedFolder = settings.ClipDirectory; loadedStamp = stamp;
         loadedLastClip = lastSavedClip;
         loading?.Cancel();
         var cts = loading = new CancellationTokenSource();
