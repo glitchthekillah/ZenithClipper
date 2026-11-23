@@ -538,7 +538,11 @@ sealed class HRow : Panel, IMeasured
         SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
     }
     public T Add<T>(T control, bool fill = false) where T : Control { control.Tag = fill ? "fill" : control.Tag; Controls.Add(control); return control; }
-    public int MeasureHeight(int width) => Height;
+    /// <summary>The row's own height. A parent stack can stretch the row while it's briefly its last child (during
+    /// construction); measuring must still report this, or the stretch sticks. That pushed Recent clips off screen.</summary>
+    int natural;
+    public new int Height { get => base.Height; set { base.Height = value; natural = value; } }
+    public int MeasureHeight(int width) => natural;
     protected override void OnLayout(LayoutEventArgs levent)
     {
         var visible = Controls.Cast<Control>().Where(c => c.Visible).ToList();

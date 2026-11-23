@@ -141,6 +141,21 @@ public sealed class PanelForm : Form
             // IPC and library work start after the rail header has actually painted.
         };
         PanelStartupProbe.Mark("panel_constructed");
+        // Diagnostics: ZENITHCLIPPER_DEBUG_SHOT=<png> dumps the live rail and its layout after a few seconds.
+        if (Environment.GetEnvironmentVariable("ZENITHCLIPPER_DEBUG_SHOT") is { Length: > 0 } shot)
+        {
+            var t = new System.Windows.Forms.Timer { Interval = 9000 };
+            t.Tick += (_, _) =>
+            {
+                t.Stop();
+                var root = railWidget.Controls[0];
+                using (var bmp = new Bitmap(root.Width, root.Height)) { root.DrawToBitmap(bmp, new Rectangle(Point.Empty, root.Size)); bmp.Save(shot); }
+                var lines = new List<string>();
+                void Dump(System.Windows.Forms.Control c, int d) { lines.Add($"{new string(' ', d * 2)}{c.GetType().Name} vis={c.Visible} {c.Bounds}"); if (d < 4) foreach (System.Windows.Forms.Control k in c.Controls) Dump(k, d + 1); }
+                Dump(root, 0); File.WriteAllLines(shot + ".txt", lines);
+            };
+            t.Start();
+        }
         if (PanelStartupProbe.Enabled) { TopMost = false; Bounds = new Rectangle(-32000, -32000, Width, Height); Opacity = 1; }
         FormClosed += (_, _) => { volumeDebounce.Dispose(); poll.Dispose(); toastTimer.Dispose(); fadeIn.Dispose(); if (homeBuilt) recent.Dispose(); };
     }
@@ -247,7 +262,7 @@ public sealed class PanelForm : Form
             if (baseline != null) LoadSettings(baseline);
             PlaceWidgets(); settingsWidget.Show(this); PlaceWidgets(); settingsWidget.Activate(); railWidget.Hide();
             // The tabs were laid out before the window had a size; lay the current one out again now that it does.
-            showPage?.Invoke(settingsPage);
+            BeginInvoke(() => { int p = settingsPage; if (settingsPages.Count > 1) showPage((p + 1) % settingsPages.Count); showPage(p); });
         }
         else
         {
@@ -281,6 +296,8 @@ public sealed class PanelForm : Form
             foreach (float cpu in new[] { 1.4f, 1.9f, 1.6f, 2.2f, 1.7f, 1.5f, 2.0f, 1.8f, 1.6f, 1.7f }) tiles.SetPerf(cpu, 86L * 1048576);
             tiles.SetToday(0, 0);
         }
+        // Show the real clips folder in the rail shot so the Recent clips grid gets checked too.
+        recent.RefreshClips(Environment.GetEnvironmentVariable("ZENITHCLIPPER_SNAPSHOT_CLIPS") is { Length: > 0 } clipDir ? settings with { ClipDirectory = clipDir } : settings, null); for (int i = 0; i < 40; i++) { Application.DoEvents(); Thread.Sleep(25); }
         if (Environment.GetEnvironmentVariable("ZENITHCLIPPER_SNAPSHOT_FILM") is { Length: > 0 } filmDir) FilmRail(filmDir);
         railWidget.Size = new Size(railWidget.Width, Theme.S(1200)); Save(railWidget, "rail");
         settingsWidget.Location = new Point(-32000, -32000); settingsWidget.Show(this); settingsWidget.Height = Math.Min(Theme.S(1400), SettingsHeight());
@@ -602,23 +619,8 @@ public sealed class PanelForm : Form
 
     static void ShowAudioChoices(ZButton button, string current, IEnumerable<WindowsEndpoints.Device> choices, Action<WindowsEndpoints.Device> select)
     {
-        var menu = new ContextMenuStrip
-        {
-            Renderer = new EditorForm.DarkMenuRenderer(),
-            BackColor = Theme.Raised,
-            ForeColor = Theme.Text,
-            Font = Theme.Body,
-            ShowCheckMargin = true,
-            ShowImageMargin = false
-        };
-        foreach (var option in choices)
-        {
-            var item = new ToolStripMenuItem(option.Name) { Checked = option.Id == current };
-            item.Click += (_, _) => select(option);
-            menu.Items.Add(item);
-        }
-        menu.Closed += (_, _) => menu.Dispose();
-        menu.Show(button, new Point(0, button.Height));
+        var list = choices.ToList();
+        ChoicePopup.Show(button, list.Select(c => c.Name).ToList(), list.FindIndex(c => c.Id == current), i => select(list[i]));
     }
 
     Settings BuildFromControls()
