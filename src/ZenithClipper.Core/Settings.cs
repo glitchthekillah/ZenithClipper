@@ -15,7 +15,7 @@ public sealed record Settings
     public string WindowsCaptureBackend { get; init; } = "auto";
     public bool CaptureAudio { get; init; } = true;
     /// <summary>Mix microphone audio into newly captured clips.</summary>
-    public bool CaptureMicrophone { get; init; }
+    public bool CaptureMicrophone { get; init; } = true;
     public string WindowsInputDevice { get; init; } = "";
     public string WindowsOutputDevice { get; init; } = "";
     public string LinuxPlaybackDevice { get; init; } = "";

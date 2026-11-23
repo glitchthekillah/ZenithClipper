@@ -194,6 +194,7 @@ public sealed class PanelForm : Form
         void JumpTo(int index)
         {
             if (index < 0 || index >= pages.Count) return;
+            settingsPage = index;
             settingsView.SuspendLayout();
             for (int i = 0; i < pages.Count; i++) pages[i].Visible = i == index;
             settingsView.AutoScrollPosition = Point.Empty;
@@ -236,6 +237,7 @@ public sealed class PanelForm : Form
         settingsView.ResumeLayout(false);
         return Math.Max(nav.MinimumHeight, Theme.S(16) + tallest + Theme.S(16 + 16) + Theme.S(64) + Theme.S(24));
     }
+    int settingsPage;
     void ShowSettings(bool show)
     {
         if (!show && !settingsBuilt) return;
@@ -244,6 +246,8 @@ public sealed class PanelForm : Form
         {
             if (baseline != null) LoadSettings(baseline);
             PlaceWidgets(); settingsWidget.Show(this); PlaceWidgets(); settingsWidget.Activate(); railWidget.Hide();
+            // The tabs were laid out before the window had a size; lay the current one out again now that it does.
+            showPage?.Invoke(settingsPage);
         }
         else
         {
@@ -1294,7 +1298,8 @@ sealed class AudioList : Control, IMeasured
         {
             string name = names[i]; bool off = excluded.Contains(name); int level = Level(name);
             var row = new Rectangle(0, y, Width, RowH);
-            if (i == hover || i == dragging) Theme.Fill(g, RectangleF.Inflate(row, Theme.S(6f), -Theme.S(2f)), Theme.S(6f), Theme.Hover);
+            // Keep the hover pill inside the control: inflating past the edges got clipped into a square, off-centre block.
+            if (i == hover || i == dragging) Theme.Fill(g, new RectangleF(0.5f, y + Theme.S(2f), Width - 1f, RowH - Theme.S(4f)), Theme.S(6f), Theme.Hover);
             int mid = y + RowH / 2;
             var icon = new Rectangle(0, mid - Theme.S(10), Theme.S(20), Theme.S(20));
             if (AppIcons.Get(name) is { } bmp)

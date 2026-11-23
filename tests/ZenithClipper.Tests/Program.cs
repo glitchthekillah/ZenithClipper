@@ -154,13 +154,13 @@ var tests = new (string, Action)[] {
     ("Windows microphone and output choices persist and require a fresh capture", () =>
     {
         var defaults = System.Text.Json.JsonSerializer.Deserialize("{}", CoreJsonContext.Default.Settings)!;
-        Equal(false, defaults.CaptureMicrophone);
+        Equal(true, defaults.CaptureMicrophone);
         Equal("", defaults.WindowsInputDevice);
         Equal("", defaults.WindowsOutputDevice);
-        var configured = defaults with { CaptureMicrophone = true, WindowsInputDevice = "{mic}", WindowsOutputDevice = "{speakers}" };
+        var configured = defaults with { CaptureMicrophone = false, WindowsInputDevice = "{mic}", WindowsOutputDevice = "{speakers}" };
         var json = System.Text.Json.JsonSerializer.Serialize(configured, CoreJsonContext.Default.Settings);
         var restored = System.Text.Json.JsonSerializer.Deserialize(json, CoreJsonContext.Default.Settings)!;
-        Equal(true, restored.CaptureMicrophone);
+        Equal(false, restored.CaptureMicrophone);
         Equal(configured.WindowsInputDevice, restored.WindowsInputDevice);
         Equal(configured.WindowsOutputDevice, restored.WindowsOutputDevice);
         Equal(true, SettingsChanges.RequiresRestart(defaults, restored));
