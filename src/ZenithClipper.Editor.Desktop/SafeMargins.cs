@@ -30,16 +30,26 @@ public sealed partial class EditorWindow
     readonly SafeMarginsOverlay safeMargins = new();
     /// <summary>Burned-in-style timecode over the program monitor (preview only).</summary>
     readonly Avalonia.Controls.TextBlock timecodeOverlay = new() { IsVisible = false, IsHitTestVisible = false, FontSize = 15, Foreground = Avalonia.Media.Brushes.White, Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromArgb(170, 0, 0, 0)), Padding = new Avalonia.Thickness(8, 3), HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom, Margin = new Avalonia.Thickness(0, 0, 0, 14), FontFamily = new Avalonia.Media.FontFamily("Consolas, Menlo, monospace") };
-    /// <summary>Premiere's playback resolution: Full, 1/2 (default) or 1/4 of the sequence width, capped at 1920.</summary>
-    int previewWidth = 960;
+    int previewResolution;
+    int PreviewWidth()
+    {
+        int width = Sequence.Width;
+        return previewResolution switch
+        {
+            1 => Math.Min(1920, width),
+            2 => Math.Clamp(width / 2, 160, 960),
+            3 => Math.Clamp(width / 4, 160, 480),
+            _ => Math.Min(width, width > 1920 || timelineFps.Value > 50 ? 640 : 960)
+        };
+    }
     Avalonia.Controls.ComboBox PlaybackResolution()
     {
-        var box = new Avalonia.Controls.ComboBox { ItemsSource = new[] { "Full", "1/2", "1/4" }, SelectedIndex = 1, FontSize = 11.5, MinHeight = 26, Height = 26, Width = 70, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Margin = new Avalonia.Thickness(0, 0, 4, 0) };
+        var box = new Avalonia.Controls.ComboBox { ItemsSource = new[] { "Auto", "Full", "1/2", "1/4" }, SelectedIndex = previewResolution, FontSize = 11.5, MinHeight = 26, Height = 26, Width = 70, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Margin = new Avalonia.Thickness(0, 0, 4, 0) };
         Avalonia.Controls.ToolTip.SetTip(box, "Playback resolution. Lower is smoother on big clips; export is always full quality.");
         box.SelectionChanged += (_, _) =>
         {
-            int full = Math.Min(1920, Sequence.Width);
-            previewWidth = box.SelectedIndex switch { 0 => full, 2 => Math.Max(160, full / 4), _ => Math.Max(160, full / 2) };
+            if (box.SelectedIndex < 0) return;
+            previewResolution = box.SelectedIndex;
             graphRevision++; Refresh(true);
         };
         return box;

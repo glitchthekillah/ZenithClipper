@@ -50,7 +50,7 @@ public sealed partial class EditorWindow
         var revision = graphRevision;
         if (loadedRevision == revision)
             return;
-        await engine.LoadAsync(PreviewProject(), previewWidth);
+        await engine.LoadAsync(PreviewProject(), PreviewWidth());
         loadedRevision = revision;
     }
 

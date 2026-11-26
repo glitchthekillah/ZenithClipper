@@ -117,17 +117,32 @@ public sealed class MltSession : IDisposable,IAsyncDisposable
                 try
                 {
                     try{audio=new();}catch(Exception ex) when(ex is IOException or DllNotFoundException){AudioError=ex.Message;}
-                    long start=Position>=Duration-1?0:Position;double nextImage=start;var clock=Stopwatch.StartNew();
+                    long start = Position >= Duration - 1 ? 0 : Position;
+                    double frameMs = 1000 / fps.Value;
+                    double imageInterval = Math.Max(frameMs, 1000d / 30);
+                    double nextImage = 0, lastImage = 0;
+                    var clock = Stopwatch.StartNew();
                     for(long p=start;p<Duration;p++)
                     {
-                        token.ThrowIfCancellationRequested();bool show=p>=nextImage;
+                        token.ThrowIfCancellationRequested();
+                        double frameTime = (p - start) * frameMs;
+                        // Prioritize continuous audio when decoding falls behind. Resume rendering as soon as
+                        // the next scheduled image is current again, and always display the final frame.
+                        bool show = p == start || p == Duration - 1 || frameTime - lastImage >= 100 ||
+                            (frameTime + .01 >= nextImage && clock.Elapsed.TotalMilliseconds <= frameTime + imageInterval);
                         await gate.WaitAsync(token).ConfigureAwait(false);PreviewFrame decoded;
                         try{decoded=ReadFrame(p,show,audio!=null);}finally{gate.Release();}
                         // Backpressure leaves at most 100 ms queued before adding one bounded frame.
                         if(audio!=null){audio.Queue(decoded.AudioPcm);TrackPeak(decoded.AudioPcm);Loudness.Add(decoded.AudioPcm);}
-                        if(show){onFrame(decoded);nextImage=p+Math.Max(1,fps.Value/30);}
+                        if (show)
+                        {
+                            onFrame(decoded);
+                            lastImage = frameTime;
+                            // Use time slots instead of rounding the display interval up on 120/144/165 fps clips.
+                            nextImage = (Math.Floor((frameTime + .01) / imageInterval) + 1) * imageInterval;
+                        }
                         while(audio?.QueuedBytes>19200){await Task.Delay(5,token).ConfigureAwait(false);}
-                        double wait=(p-start+1)*1000/fps.Value-clock.Elapsed.TotalMilliseconds;
+                        double wait = frameTime + frameMs - clock.Elapsed.TotalMilliseconds;
                         if(wait>1)await Task.Delay(TimeSpan.FromMilliseconds(wait),token).ConfigureAwait(false);
                     }
                     while(audio?.QueuedBytes>0)await Task.Delay(5,token).ConfigureAwait(false);

@@ -27,8 +27,6 @@ public sealed partial class EditorWindow
         monitorScroller.HorizontalScrollBarVisibility = bar; monitorScroller.VerticalScrollBarVisibility = bar;
         if (zoom > 0) { monitorViewport.Width = Sequence.Width * zoom; monitorViewport.Height = Sequence.Height * zoom; monitorViewport.HorizontalAlignment = HorizontalAlignment.Center; monitorViewport.VerticalAlignment = VerticalAlignment.Center; }
         else { monitorViewport.Width = double.NaN; monitorViewport.Height = double.NaN; monitorViewport.HorizontalAlignment = HorizontalAlignment.Stretch; monitorViewport.VerticalAlignment = VerticalAlignment.Stretch; }
-        // Render the preview sharp enough for the zoom: never below the on-screen size, capped at full resolution.
-        if (zoom > 0) { int want = (int)Math.Min(Math.Min(1920, Sequence.Width), Math.Ceiling(Sequence.Width * zoom)); if (want > previewWidth) { previewWidth = want; graphRevision++; Refresh(true); } }
         status.Text = zoom > 0 ? $"Monitor at {zoom * 100:0}%." : "Monitor fits the panel.";
     }
 }

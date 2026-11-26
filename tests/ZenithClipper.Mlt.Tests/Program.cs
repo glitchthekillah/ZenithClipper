@@ -60,6 +60,13 @@ try
         await engine.PauseAsync();if(frames<1 || engine.AudioError!=null)throw new Exception("Dummy audio playback failed: "+engine.AudioError);
     }
     Console.WriteLine("PASS MLT synchronized preview loop with queued audio");
+    await engine.LoadAsync(project, 160);
+    var shown = new List<long>();
+    await engine.PlayAsync(frame => shown.Add(frame.Position)).WaitAsync(TimeSpan.FromSeconds(10));
+    if (shown.Count < 2 || shown[0] != 0 || shown[^1] != engine.Duration - 1 ||
+        shown.Zip(shown.Skip(1)).Any(pair => pair.First >= pair.Second))
+        throw new Exception("Playback must show ordered frames and reach the timeline end.");
+    Console.WriteLine("PASS MLT paced preview presents the first and final frames in order");
     string titlePng=Path.Combine(root,"alpha-title.png");
     await MediaTools.RunAsync(ffmpeg,["-v","error","-f","lavfi","-i","color=c=black@0:s=64x16,format=rgba,drawbox=x=0:y=0:w=32:h=16:color=white@1:t=fill:replace=1","-frames:v","1","-threads","1","-filter_threads","1",titlePng]);
     var captionProject=ProjectValidation.Clone(project);var captionSequence=captionProject.Sequences[0];
