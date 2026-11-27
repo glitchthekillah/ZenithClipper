@@ -10,16 +10,14 @@ $env:NUGET_PACKAGES = Join-Path $root '.packages'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 $project = Join-Path $root 'src/ZenithClipper.Editor.Desktop/ZenithClipper.Editor.Desktop.csproj'
 $destination = Join-Path $root 'build/editor'
-$runtime = Join-Path $root 'build/windows/runtime'
 $source = Join-Path $root 'tools/mlt-runtime/package/Shotcut'
-if (!(Test-Path -LiteralPath (Join-Path $runtime 'host/fxr'))) { throw 'Package the Windows recorder runtime first: build/windows/runtime is required.' }
 if (!(Test-Path -LiteralPath (Join-Path $source 'libmlt-7.dll'))) { throw 'The portable MLT source runtime is missing from tools/mlt-runtime/package/Shotcut.' }
 New-Item -ItemType Directory -Force -Path $destination | Out-Null
 Push-Location $root
 try {
-    & $sdk restore $project --configfile (Join-Path $root 'NuGet.Config') -r win-x64
+    & $sdk restore $project --configfile (Join-Path $root 'NuGet.Config') -r win-x64 -p:SelfContained=true
     if ($LASTEXITCODE) { throw "Editor restore failed ($LASTEXITCODE)." }
-    & $sdk publish $project -c Release -r win-x64 --self-contained false --no-restore -p:UseAppHost=true -p:AppHostRelativeDotNet=../windows/runtime -o $destination
+    & $sdk publish $project -c Release -r win-x64 --self-contained true --no-restore -o $destination
     if ($LASTEXITCODE) { throw "Editor publish failed ($LASTEXITCODE)." }
 } finally { Pop-Location }
 
@@ -55,7 +53,7 @@ Keep original license notices with any redistributed package. No source files ar
 ZenithClipper editor private development package
 Generated UTC: $([DateTime]::UtcNow.ToString('o'))
 Managed UI: Avalonia 12.1.5; framework-dependent .NET 10; win-x64.
-Apphost runtime location: ../windows/runtime (distributed with the Windows recorder package).
+The editor includes its own .NET runtime.
 Native runtime input: tools/mlt-runtime/package/Shotcut, extracted from the official Shotcut portable distribution.
 Current source provenance and release URL: THIRD_PARTY.md and licenses/mlt-runtime/THIRD_PARTY_DRAFT.md.
 Original native licenses: licenses/mlt-runtime/COPYING.txt and LICENSE.
@@ -101,4 +99,4 @@ if (Test-Path -LiteralPath $assetsPath) {
 $licenseRows | Sort-Object Package,Version | Export-Csv -LiteralPath (Join-Path $destination 'licenses/NUGET-LICENSES.tsv') -Delimiter "`t" -NoTypeInformation -Encoding utf8
 if (Get-ChildItem -LiteralPath $mlt -Recurse -File -Filter '*.exe') { throw 'Unexpected executable in the MLT runtime folder; no existing files were deleted.' }
 Write-Host "Built $destination/ZenithClipper.Editor.exe"
-Write-Host 'Keep build/editor beside build/windows: the apphost uses ../windows/runtime and media import can use ../windows/ffprobe.exe.'
+Write-Host 'Keep build/editor beside build/windows: the controls locate the editor there, and media import can use ../windows/ffprobe.exe.'

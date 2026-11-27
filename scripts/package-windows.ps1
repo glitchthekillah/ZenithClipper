@@ -2,10 +2,10 @@ param([string]$FfmpegDirectory = '')
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
-& "$PSScriptRoot/dev.ps1" app
-if ($LASTEXITCODE) { exit $LASTEXITCODE }
-& "$PSScriptRoot/dev.ps1" panel
-if ($LASTEXITCODE) { exit $LASTEXITCODE }
+$env:DOTNET_CLI_HOME = Join-Path $root '.build-home'
+$env:APPDATA = Join-Path $env:DOTNET_CLI_HOME 'AppData'
+$env:NUGET_PACKAGES = Join-Path $root '.packages'
+New-Item -ItemType Directory -Path $env:APPDATA -Force | Out-Null
 $destination = Join-Path $root 'build/windows'
 New-Item -ItemType Directory -Path $destination -Force | Out-Null
 $checked=[IO.Path]::GetFullPath($destination)
@@ -20,19 +20,10 @@ New-Item -ItemType File -Path (Join-Path $destination 'portable.flag') -Force | 
 $sdk=Join-Path $root 'tools/dotnet/dotnet.exe'
 if(!(Test-Path -LiteralPath $sdk)){$sdk='C:/Users/szajf/My Projects/ZenithClipper/tools/dotnet/dotnet.exe'}
 if(!(Test-Path -LiteralPath $sdk)){$sdk=(Get-Command dotnet).Source}
-& $sdk publish src/ZenithClipper.App -c Release --no-restore --no-build -p:ZenithLocalRuntime=true -o $destination
-if($LASTEXITCODE){exit $LASTEXITCODE}
-& $sdk publish src/ZenithClipper.Windows -c Release --no-restore --no-build -p:ZenithLocalRuntime=true -o $destination
-if($LASTEXITCODE){exit $LASTEXITCODE}
-$sdkRoot=Split-Path $sdk -Parent
-$version=(Get-ChildItem (Join-Path $sdkRoot 'shared/Microsoft.WindowsDesktop.App') -Directory | Sort-Object { [Version]$_.Name } -Descending | Select-Object -First 1).Name
-if(!$version){throw 'A local .NET Desktop runtime is required for packaging.'}
-$runtime=Join-Path $destination 'runtime'
-foreach($relative in @('host/fxr','shared/Microsoft.NETCore.App','shared/Microsoft.WindowsDesktop.App')){
-    $parent=Join-Path $runtime $relative;New-Item -ItemType Directory -Path $parent -Force | Out-Null
-    Copy-Item (Join-Path $sdkRoot "$relative/$version") $parent -Recurse -Force
+foreach ($project in @('src/ZenithClipper.App', 'src/ZenithClipper.Windows')) {
+    & $sdk publish $project -c Release -r win-x64 --self-contained true -o $destination
+    if ($LASTEXITCODE) { throw "Self-contained publish failed for $project ($LASTEXITCODE)." }
 }
-Get-ChildItem $sdkRoot -File | Where-Object {$_.Name -match 'LICENSE|ThirdParty'} | Copy-Item -Destination $runtime -Force
 if (!$FfmpegDirectory) {
     $binary = Get-ChildItem (Join-Path $root 'tools/ffmpeg-package') -Filter ffmpeg.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($binary) { $FfmpegDirectory = $binary.DirectoryName }

@@ -33,7 +33,7 @@ Hardware encoding on NVIDIA, AMD and Intel GPUs; it never silently falls back to
 3. Close controls when finished configuring. Only the engine and its FFmpeg encoder remain running.
 4. Open **Open Editor.cmd**, or use the control panel, to trim/export clips. Closing the editor terminates its process.
 
-The portable Windows build includes the tested **.NET 10.0.14 Desktop Runtime** locally, plus FFmpeg/FFprobe. It installs no system runtime. No account, service, network listener, cloud, telemetry, persistent browser, or social feed.
+The Windows installer and portable ZIP ship with self-contained executables and include FFmpeg/FFprobe. No separate .NET installation is required. No account, service, network listener, cloud, telemetry, persistent browser, or social feed.
 
 The package is portable: `build/windows/portable.flag` makes settings, clips, temporary exports, logs, and the rolling buffer live in `build/windows/data`. Change the clip folder in controls if desired. `ZENITHCLIPPER_HOME` overrides the data folder for tests/advanced use. Without the portable marker, data uses the OS local application-data directory.
 

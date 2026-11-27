@@ -52,7 +52,33 @@ jobs:
       - name: Build
         shell: pwsh
         run: ./scripts/package-windows.ps1
-      # Layout matters: the editor finds its .NET runtime at ..\windows\runtime and the panel finds the editor at ..\editor.
+      # Keep the editor beside the controls so each can find the other's media tools.
+      - name: Verify bundled .NET and launch packaged executables
+        timeout-minutes: 3
+        shell: pwsh
+        run: |
+          foreach ($target in @('windows/zenithclipper', 'windows/ZenithClipper.Windows', 'editor/ZenithClipper.Editor')) {
+            $config = Get-Content "build/$target.runtimeconfig.json" -Raw | ConvertFrom-Json
+            if (!$config.runtimeOptions.includedFrameworks -or $config.runtimeOptions.framework -or $config.runtimeOptions.frameworks) {
+              throw "$target is not self-contained."
+            }
+            if (!(Test-Path (Join-Path (Split-Path "build/$target") 'coreclr.dll'))) { throw "$target is missing CoreCLR." }
+          }
+          $env:DOTNET_ROOT = "$env:RUNNER_TEMP/no-installed-dotnet"
+          $env:DOTNET_ROOT_X64 = $env:DOTNET_ROOT
+          $env:ZENITHCLIPPER_HOME = "$env:RUNNER_TEMP/zenithclipper-smoke"
+          & ./build/windows/zenithclipper.exe config-path
+          if ($LASTEXITCODE) { throw 'Packaged recorder did not start.' }
+          $probe = Join-Path $env:RUNNER_TEMP 'zenithclipper-panel-smoke.json'
+          & ./build/windows/ZenithClipper.Windows.exe --startup-probe $probe | Out-Host
+          if ($LASTEXITCODE -or !(Test-Path -LiteralPath $probe)) { throw 'Packaged control panel did not start.' }
+          $result = Get-Content -LiteralPath $probe -Raw | ConvertFrom-Json
+          if ($null -eq $result.StagesMs.widgets_painted) { throw 'Packaged control panel did not render.' }
+          $env:SDL_AUDIODRIVER = 'dummy'
+          $env:SDL_VIDEODRIVER = 'dummy'
+          $env:QT_QPA_PLATFORM = 'offscreen'
+          & ./build/editor/ZenithClipper.Editor.exe --headless-smoke | Out-Host
+          if ($LASTEXITCODE) { throw 'Packaged editor smoke test failed.' }
       - name: Portable zip and installer
         shell: pwsh
         run: |
